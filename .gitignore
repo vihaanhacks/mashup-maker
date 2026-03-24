@@ -1,0 +1,13 @@
+venv/
+.venv/
+bin/
+temp_audio/
+downloads/
+__pycache__/
+*.mp3
+*.wav
+*.webm
+*.exe
+*.log
+.vscode/
+.DS_Store

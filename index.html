@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mashup Maker | Professional Editorial Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#c5a059">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+</head>
+
+<body class="theme-gold">
+    <div class="background-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <header class="studio-nav">
+        <div class="nav-container">
+            <span class="studio-brand">Mashup Maker</span>
+            <nav id="studio-navigation" class="hidden">
+                <button type="button" class="nav-tab active" data-target="selection-window">1. Curation</button>
+                <button type="button" class="nav-tab" data-target="studio-window">2. Studio</button>
+                <button type="button" class="nav-tab" data-target="direction-window">3. Direction</button>
+            </nav>
+        </div>
+    </header>
+
+    <form id="mashup-form">
+        <!-- Phase 1: Welcome Window -->
+        <section id="welcome-window" class="tab-content active editorial-layout">
+            <div class="editorial-header" style="border-top: none;">
+                <span class="manifesto-label">Mashup Maker / Ver 2.1</span>
+                <h1 class="premium-headline">Designing <em>Sonic</em> Legacies</h1>
+                <p class="intro-text">
+                    "Synthesis is the convergence of disparate souls into a singular sonic heartbeat.
+                    Curate your elements, define your atmosphere, and witness the birth of a masterpiece."
+                </p>
+            </div>
+
+            <div class="studio-dashboard">
+                <div class="metric-item">
+                    <span class="metric-label">Synthesis Engine</span>
+                    <span class="metric-value"><span class="status-indicator"></span>Ready</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Buffer Latency</span>
+                    <span class="metric-value" id="dash-latency">1.2ms</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Active Nodes</span>
+                    <span class="metric-value">5 Parallel</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">System Time</span>
+                    <span class="metric-value" id="dashboard-clock">17:37:36</span>
+                </div>
+            </div>
+
+            <div class="window-content" style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                <div class="theme-gui-panel">
+                    <div class="gui-panel-header">
+                        <span class="gui-label">AESTHETIC ENGINE / SELECT CORE PHASE</span>
+                        <span class="gui-status">ALL SYSTEMS OPERATIONAL</span>
+                    </div>
+                    <div class="theme-selection-bar">
+                        <button type="button" class="theme-card-gui active" data-theme="gold" title="Cream Gold">
+                            <div class="theme-icon">⚜️</div>
+                            <span class="theme-label">CREAM GOLD</span>
+                        </button>
+                        <button type="button" class="theme-card-gui" data-theme="teal" title="Modern Teal">
+                            <div class="theme-icon">💠</div>
+                            <span class="theme-label">MODERN TEAL</span>
+                        </button>
+                        <button type="button" class="theme-card-gui" data-theme="blue" title="Sky Blue">
+                            <div class="theme-icon">💎</div>
+                            <span class="theme-label">SKY BLUE</span>
+                        </button>
+                        <button type="button" class="theme-card-gui" data-theme="onyx" title="Onyx Minimal">
+                            <div class="theme-icon">🖤</div>
+                            <span class="theme-label">ONYX MINIMAL</span>
+                        </button>
+                        <button type="button" class="theme-card-gui" data-theme="gradient" title="Cinematic Gradient">
+                            <div class="theme-icon">🌌</div>
+                            <span class="theme-label">CYBER GRADIENT</span>
+                        </button>
+                        <button type="button" class="theme-card-gui" data-theme="sunset" title="Sunset Gold">
+                            <div class="theme-icon">🌅</div>
+                            <span class="theme-label">SUNSET GOLD</span>
+                        </button>
+                        <button type="button" class="theme-card-gui" data-theme="emerald" title="Emerald Glass">
+                            <div class="theme-icon">🍃</div>
+                            <span class="theme-label">EMERALD GLASS</span>
+                        </button>
+                        <button type="button" class="theme-card-gui" data-theme="rose" title="Midnight Rose">
+                            <div class="theme-icon">🌹</div>
+                            <span class="theme-label">MIDNIGHT ROSE</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="window-actions" style="justify-content: center; border: none; margin-top: 4rem;">
+                <button type="button" class="btn primary-btn pulse-glow" id="enter-studio"
+                    style="border-radius: 0; padding: 2rem 5rem;">INITIALIZE SESSION</button>
+            </div>
+            </div>
+        </section>
+
+        <!-- Phase 2: Selection Window -->
+        <section id="selection-window" class="tab-content editorial-layout">
+            <div class="editorial-header">
+                <span class="manifesto-label">The Selection / Curation</span>
+                <h1>Sonic <em>Curation</em></h1>
+                <p class="intro-text">"Curation is the art of selection. Handpick your sonic elements (1 Reel + 4 Songs)
+                    to begin the synthesis."</p>
+            </div>
+
+            <div id="tracks-container" class="tracks-grid">
+                <!-- Track Cards dynamically added here -->
+            </div>
+
+            <div class="window-actions" style="justify-content: center; border: none; margin-top: 5rem; gap: 2rem;">
+                <button type="button" class="btn secondary-btn" id="sample-suite"
+                    style="border: 1px solid var(--primary); color: var(--primary);">ONE-CLICK SAMPLE SUITE</button>
+                <button type="button" class="btn primary-btn next-tab" data-next="studio-window">Proceed to Pro
+                    Studio</button>
+            </div>
+        </section>
+
+        <!-- Phase 3: Studio Window -->
+        <section id="studio-window" class="tab-content editorial-layout">
+            <div class="editorial-header" style="border-top: none;">
+                <span class="manifesto-label">The Studio / Parametric Control</span>
+                <h1 class="premium-headline">Pro <em>Studio</em></h1>
+                <p class="intro-text">Master your mix. 20 high-fidelity parameters to sculpt the perfect sonic
+                    landscape.</p>
+            </div>
+
+            <div class="studio-presets"
+                style="margin-bottom: 5rem; display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                <button type="button" class="btn-preset" data-preset="classical">Indian Classical</button>
+                <button type="button" class="btn-preset" data-preset="wedding">Indian Wedding</button>
+                <button type="button" class="btn-preset" data-preset="bollytech">Bolly-Tech</button>
+                <button type="button" class="btn-preset" data-preset="zen">Zen Master</button>
+                <button type="button" class="btn-preset" data-preset="inferno">Club Inferno</button>
+                <button type="button" class="btn-preset" data-preset="cinematic">Cinematic Master</button>
+                <button type="button" class="btn-preset" data-preset="lofi">Lofi Studio</button>
+                <button type="button" class="btn-preset" data-preset="ethereal">Ethereal Ghost</button>
+            </div>
+
+            <div class="pro-studio-grid">
+                <!-- Group 1: Tone & Space -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Sub-Bass Pulse</label>
+                        <span class="info-trigger"
+                            data-info="Sub-Bass Pulse: Boosts low-end frequencies below 60Hz for physical impact.">i</span>
+                        <span class="slider-value" id="bass-val">0dB</span>
+                    </div>
+                    <input type="range" id="bass-level" name="bass" min="-15" max="15" value="0" class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Mid Frequency</label>
+                        <span class="info-trigger"
+                            data-info="Mid Frequency: Adjusts the presence of vocals and instruments in the center of the spectrum.">i</span>
+                        <span class="slider-value" id="mid-val">0dB</span>
+                    </div>
+                    <input type="range" id="mid-level" name="mid" min="-15" max="15" value="0" class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>High Air (Treble)</label>
+                        <span class="info-trigger"
+                            data-info="High Air (Treble): Adds clarity and 'sheen' to the high-end frequencies.">i</span>
+                        <span class="slider-value" id="treble-val">0dB</span>
+                    </div>
+                    <input type="range" id="treble-level" name="treble" min="-15" max="15" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Stereo Width</label>
+                        <span class="info-trigger"
+                            data-info="Stereo Width: Widens the soundstage to create a more immersive, spacious mix.">i</span>
+                        <span class="slider-value" id="width-val">Original</span>
+                    </div>
+                    <input type="range" id="width-level" name="width" min="0" max="200" value="100"
+                        class="premium-slider">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Choral Ensemble (Chorus)</label>
+                        <span class="info-trigger"
+                            data-info="Choral Ensemble: Adds a shimmering, multi-voice effect for richer textures.">i</span>
+                        <span class="slider-value" id="chorus-val">Off</span>
+                    </div>
+                    <input type="range" id="chorus-level" name="chorus" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+
+                <!-- Group 2: Time & Pitch -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Temporal Flow (Speed)</label>
+                        <span class="info-trigger"
+                            data-info="Temporal Flow (Speed): Changes the playback speed of the audio for creative tempo adjustments.">i</span>
+                        <span class="slider-value" id="speed-val">1.00x</span>
+                    </div>
+                    <input type="range" id="speed-level" name="speed" min="50" max="150" value="100"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Harmonic Pitch</label>
+                        <span class="info-trigger"
+                            data-info="Harmonic Pitch: Shifts the musical key without affecting speed, perfect for matching tracks.">i</span>
+                        <span class="slider-value" id="pitch-val">0st</span>
+                    </div>
+                    <input type="range" id="pitch-level" name="pitch" min="-12" max="12" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Entrance Fade</label>
+                        <span class="info-trigger"
+                            data-info="Entrance Fade: Controls the smoothness of the track's introduction over time.">i</span>
+                        <span class="slider-value" id="fade-in-val">0s</span>
+                    </div>
+                    <input type="range" id="fade-in-level" name="fade_in" min="0" max="10000" value="0" step="100"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Exit Fade</label>
+                        <span class="info-trigger"
+                            data-info="Exit Fade: Controls the smoothness of the track's conclusion over time.">i</span>
+                        <span class="slider-value" id="fade-out-val">0s</span>
+                    </div>
+                    <input type="range" id="fade-out-level" name="fade_out" min="0" max="10000" value="0" step="100"
+                        class="premium-slider">
+                </div>
+
+                <!-- Group 3: Atmosphere -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Reverb Space</label>
+                        <span class="info-trigger"
+                            data-info="Reverb Space: Adds a sense of physical environment (hall, room) to the sound.">i</span>
+                        <span class="slider-value" id="reverb-val">Off</span>
+                    </div>
+                    <input type="range" id="reverb-level" name="reverb" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Echo Delay</label>
+                        <span class="info-trigger"
+                            data-info="Echo Delay: Adds rhythmic repetitions of the sound for spatial depth.">i</span>
+                        <span class="slider-value" id="delay-val">Off</span>
+                    </div>
+                    <input type="range" id="delay-level" name="delay" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Chorus Depth</label>
+                        <span class="info-trigger"
+                            data-info="Chorus Depth: Thickens the sound by adding slightly detuned copies for lush texture.">i</span>
+                        <span class="slider-value" id="chorus-val">Off</span>
+                    </div>
+                    <input type="range" id="chorus-level" name="chorus" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Phaser Swirl</label>
+                        <span class="info-trigger"
+                            data-info="Phaser Swirl: Adds a sweeping, 'underwater' movement to the tone.">i</span>
+                        <span class="slider-value" id="phaser-val">Off</span>
+                    </div>
+                    <input type="range" id="phaser-level" name="phaser" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+
+                <!-- Group 4: Character -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Tube Distortion</label>
+                        <span class="info-trigger"
+                            data-info="Tube Distortion: Adds harmonic warmth and analog 'grit' to the signal.">i</span>
+                        <span class="slider-value" id="distortion-val">Clean</span>
+                    </div>
+                    <input type="range" id="distortion-level" name="distortion" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Bitcrush Grime</label>
+                        <span class="info-trigger"
+                            data-info="Bitcrush Grime: Reduces digital resolution for a 'lo-fi' retro character.">i</span>
+                        <span class="slider-value" id="bitcrush-val">Hi-Fi</span>
+                    </div>
+                    <input type="range" id="bitcrush-level" name="bitcrush" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Tremolo Speed</label>
+                        <span class="info-trigger"
+                            data-info="Tremolo Speed: Modulates the volume rapidly for a pulsing, rhythmic effect.">i</span>
+                        <span class="slider-value" id="tremolo-val">Off</span>
+                    </div>
+                    <input type="range" id="tremolo-level" name="tremolo" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Flanger Jet</label>
+                        <span class="info-trigger"
+                            data-info="Flanger Jet: Adds a resonant, sweeping 'whoosh' effect like a jet engine.">i</span>
+                        <span class="slider-value" id="flanger-val">Off</span>
+                    </div>
+                    <input type="range" id="flanger-level" name="flanger" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+
+                <!-- Group 5: Dynamics & Filters -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Compression</label>
+                        <span class="info-trigger"
+                            data-info="Compression: Evens out the dynamic range for a more consistent, professional volume.">i</span>
+                        <span class="slider-value" id="compression-val">Off</span>
+                    </div>
+                    <input type="range" id="compression-level" name="compression" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Hard Limiter</label>
+                        <span class="info-trigger"
+                            data-info="Hard Limiter: Prevents audio clipping by capping the maximum peak level.">i</span>
+                        <span class="slider-value" id="limiter-val">None</span>
+                    </div>
+                    <input type="range" id="limiter-level" name="limiter" min="0" max="100" value="100"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>High-Pass Filter</label>
+                        <span class="info-trigger"
+                            data-info="High-Pass Filter: Cuts out low-end rumble to clean up the mix.">i</span>
+                        <span class="slider-value" id="highpass-val">Off</span>
+                    </div>
+                    <input type="range" id="highpass-level" name="highpass" min="0" max="100" value="0"
+                        class="premium-slider">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>Low-Pass Filter</label>
+                        <span class="info-trigger"
+                            data-info="Low-Pass Filter: Muffles the sound by removing high-end frequencies for a warm tone.">i</span>
+                        <span class="slider-value" id="lowpass-val">Off</span>
+                    </div>
+                    <input type="range" id="lowpass-level" name="lowpass" min="0" max="100" value="100"
+                        class="premium-slider">
+                </div>
+            </div>
+
+            <div class="window-actions" style="margin-top: 5rem;">
+                <button type="button" class="btn secondary-btn prev-tab" data-prev="selection-window">Refine
+                    Curation</button>
+                <button type="button" class="btn primary-btn next-tab" data-next="direction-window"
+                    style="padding: 1.5rem 5rem;">SET VISIONARY INTENT</button>
+            </div>
+        </section>
+
+        <!-- Phase 4: Direction Window -->
+        <section id="direction-window" class="tab-content editorial-layout">
+            <div class="editorial-header">
+                <span class="manifesto-label">The Direction / Visionary Intent</span>
+                <h1>Visionary <em>Intent</em></h1>
+                <p class="intro-text">Select a signature vibe to define the harmonic soul of the synthesis.</p>
+            </div>
+
+            <div class="editorial-vibe-grid">
+                <label class="vibe-option"><input type="radio" name="vibe" value="night_drive">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-night_drive"></div>Night Drive
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="ocean_mist" checked>
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-ocean_mist"></div>Ocean Mist
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="chill">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-chill"></div>Lofi Chill
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="hype">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-hype"></div>Club Hype
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="ambient">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-ambient"></div>Ambient Space
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="cyberpunk">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-cyberpunk"></div>Cyberpunk
+                    </div>
+                </label>
+
+                <label class="vibe-option"><input type="radio" name="vibe" value="sunset_gold">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-sunset_gold"></div>Sunset Gold
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="midnight_rose">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-midnight_rose"></div>Midnight Rose
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="emerald_glass">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-emerald_glass"></div>Emerald Glass
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="retro_wave">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-retro_wave"></div>Retro Wave
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="deep_house">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-deep_house"></div>Deep House
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="jazz_cafe">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-jazz_cafe"></div>Jazz Cafe
+                    </div>
+                </label>
+
+                <!-- Indian / Hindustani Signature Collection -->
+                <label class="vibe-option"><input type="radio" name="vibe" value="indian_classical">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-indian_classical"></div>Hindustani Classical
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="indian_wedding">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-indian_wedding"></div>Indian Wedding
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="bhangra_blast">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-bhangra_blast"></div>Bhangra Blast
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="bollywood_dreams">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-bollywood_dreams"></div>Bollywood Dreams
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="sufi_mystical">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-sufi_mystical"></div>Sufi Mystical
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="ghats_varanasi">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-ghats_varanasi"></div>Ghats of Varanasi
+                    </div>
+                </label>
+
+                <label class="vibe-option"><input type="radio" name="vibe" value="trap_star">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-trap_star"></div>Trap Star
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="soul_essence">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-soul_essence"></div>Soul Essence
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="future_bass">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-future_bass"></div>Future Bass
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="cinematic">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-cinematic"></div>Cinematic Final
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="industrial">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-industrial"></div>Industrial
+                    </div>
+                </label>
+                <label class="vibe-option"><input type="radio" name="vibe" value="vintage_vinyl">
+                    <div class="vibe-card">
+                        <div class="vibe-thumb" id="thumb-vintage_vinyl"></div>Vintage Vinyl
+                    </div>
+                </label>
+            </div>
+
+            <div class="form-section manuscript-section" style="margin-top: 5rem; padding: 0 2rem;">
+                <h2 style="font-size: 1.8rem; margin-bottom: 2rem;">DIRECTORIAL GUIDANCE</h2>
+                <textarea id="instructions" name="instructions" class="manuscript-input"
+                    placeholder="Enter your visionary direction..."></textarea>
+            </div>
+
+            <div class="window-actions">
+                <button type="button" class="btn secondary-btn prev-tab" data-prev="studio-window">Adjust
+                    Studio</button>
+                <button type="submit" id="submit-btn" class="btn primary-btn pulse-glow">Begin Synthesis</button>
+            </div>
+        </section>
+    </form>
+
+    <!-- Phase 5: Mix (Result) Window -->
+    <section id="mix-window" class="tab-content editorial-layout"
+        style="background: #000; min-height: 100vh; display: none;">
+        <div id="loading-state" class="state-panel">
+            <div class="loader-container"
+                style="text-align: center; color: #fff; padding: 10rem 0; display: flex; flex-direction: column; align-items: center;">
+                <div class="editorial-loader"></div>
+                <h1 style="color: #fff; margin-top: 2rem;">COMPILING <em>MASTERPIECE</em></h1>
+
+                <div class="agent-console">
+                    <div class="console-header">
+                        <span class="console-title">AGENCY STATUS LOGS</span>
+                        <span class="console-blink"></span>
+                    </div>
+                    <div id="console-logs" class="console-body">
+                        <div class="log-entry">Initializing Synthesis Pipeline...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="success-state" class="state-panel hidden">
+            <div class="output-card pro-gui" style="max-width: 900px; margin: 5rem auto;">
+                <div class="success-header" style="text-align: center; margin-bottom: 4rem;">
+                    <h2 class="premium-title" style="color: #fff;">Masterpiece <em>Synthesized</em></h2>
+                    <p class="intro-text" style="color: rgba(255,255,255,0.7);">"The collision of elements has reached
+                        its final resonance."</p>
+                </div>
+
+                <div class="mix-details">
+                    <div class="detail-item">
+                        <label class="mini-label">AESTHETIC PROFILE</label>
+                        <span id="vibe-spec">Ocean Mist</span>
+                    </div>
+                    <div class="detail-item">
+                        <label class="mini-label">STUDIO STATUS</label>
+                        <span>High Fidelity Master</span>
+                    </div>
+                </div>
+
+                <div class="player-container" style="margin: 4rem 0;">
+                    <audio id="main-audio-player" controls style="width: 100%; filter: invert(1);"></audio>
+                </div>
+
+                <div class="output-actions" style="display: flex; gap: 2rem; justify-content: center;">
+                    <a id="download-link" href="#" class="btn primary-btn"
+                        style="text-decoration: none; padding: 1rem 3rem;">Export Master (.mp3)</a>
+                    <button type="button" class="btn secondary-btn reset-app"
+                        style="background: none; border: 1px solid rgba(255,255,255,0.2); color: #fff;">Curate New
+                        Session</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
