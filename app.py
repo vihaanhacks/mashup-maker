@@ -38,6 +38,10 @@ CORS(app)
 os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 os.makedirs(TEMP_DIR, exist_ok=True)
 
+@app.route('/')
+def index():
+    return jsonify({'status': 'System Operational', 'version': '2.1'})
+
 def parse_time(t_str):
     if not t_str: return 0
     try:

@@ -13,6 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentSessionId = null;
 
+    // Start Telemetry Immediately for "Starting Page" accuracy
+    startDashboardTelemetry();
+
+    // Optional: Pre-warm Render Backend
+    fetch('https://mashup-maker-backend.onrender.com/').catch(() => {});
+
     // 2. Navigation Logic (Phase-Locked)
     function switchTab(targetId) {
         sections.forEach(s => {
@@ -39,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab('selection-window');
         navChannels.classList.remove('hidden');
         initializeTracks();
-        startDashboardTelemetry();
     });
 
     navTabs.forEach(tab => {
@@ -285,13 +290,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => logToStudio('ENGINEER', 'Initializing parallel download streams...'), 1000);
         setTimeout(() => logToStudio('ENGINEER', 'Fetching assets from distributed nodes...'), 2500);
 
-        fetch('https://mashup-maker-backend.onrender.com/generate_mashup', {
+        const backendUrl = 'https://mashup-maker-backend.onrender.com/generate_mashup';
+
+        fetch(backendUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         })
         .then(res => {
-            if (!res.ok) return res.json().then(j => { throw new Error(j.details || "Synthesis Engine Failure"); });
+            if (!res.ok) {
+                return res.json().catch(() => ({ details: `HTTP Error ${res.status}` }))
+                    .then(j => { throw new Error(j.details || "Synthesis Engine Failure"); });
+            }
             logToStudio('VP', 'Synthesis verified. Commencing high-fidelity master...');
             return res.blob();
         })
@@ -325,12 +335,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1000);
         })
         .catch(err => {
-            logToStudio('VP', `CRITICAL ERROR: ${err.message}`, 'error');
+            let errorMsg = err.message;
+            if (errorMsg === 'Failed to fetch') {
+                errorMsg = "Backend Unreachable. Please check connection or if Render service is awake.";
+            }
+            logToStudio('VP', `CRITICAL ERROR: ${errorMsg}`, 'error');
             logToStudio('PM', 'Aborting synthesis. Returning to design board.', 'error');
             setTimeout(() => {
                 switchTab('direction-window');
                 loadingState.classList.add('hidden');
-            }, 3000);
+            }, 4000);
         });
     });
 
