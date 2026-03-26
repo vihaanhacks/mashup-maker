@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => logToStudio('ENGINEER', 'Initializing parallel download streams...'), 1000);
         setTimeout(() => logToStudio('ENGINEER', 'Fetching assets from distributed nodes...'), 2500);
 
-        fetch('http://127.0.0.1:5000/generate_mashup', {
+        fetch('https://mashup-maker-backend.onrender.com/generate_mashup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)

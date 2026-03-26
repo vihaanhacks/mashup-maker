@@ -1,0 +1,24 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "app.py",
+      "requirements.txt",
+      "venv/**",
+      ".venv/**",
+      "bin/**",
+      "downloads/**",
+      "temp_audio/**",
+      "firebase.exe"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

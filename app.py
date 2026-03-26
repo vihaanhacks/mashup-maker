@@ -8,14 +8,22 @@ import math
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 
-PROJECT_ROOT = r"c:\Vihaan\mashup-maker"
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 BIN_DIR = os.path.join(PROJECT_ROOT, 'bin')
 DOWNLOADS_DIR = os.path.join(PROJECT_ROOT, 'downloads')
 TEMP_DIR = os.path.join(PROJECT_ROOT, 'temp_audio')
 
-# Ensure binaries are in PATH before yt-dlp/pydub logic
-os.environ["PATH"] = BIN_DIR + os.pathsep + os.environ.get("PATH", "")
-FFMPEG_PATH = os.path.join(BIN_DIR, 'ffmpeg.exe')
+# Explicitly use FFmpeg from environment or default path
+FFMPEG_PATH = os.environ.get("FFMPEG_PATH")
+if not FFMPEG_PATH:
+    if os.name == 'nt': # Windows
+        FFMPEG_PATH = os.path.join(BIN_DIR, 'ffmpeg.exe')
+    else: # Linux/Mac
+        FFMPEG_PATH = "ffmpeg" # Assume in PATH
+
+# Ensure binaries are in PATH
+if os.path.exists(BIN_DIR):
+    os.environ["PATH"] = BIN_DIR + os.pathsep + os.environ.get("PATH", "")
 
 try:
     import yt_dlp
