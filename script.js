@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start Telemetry Immediately for "Starting Page" accuracy
     startDashboardTelemetry();
 
-    // Optional: Pre-warm Render Backend
-    fetch('https://mashup-maker-backend.onrender.com/').catch(() => {});
+    // Pre-warm Render Backend: start pinging immediately so it wakes up
+    warmupBackend();
 
     // 2. Navigation Logic (Phase-Locked)
     function switchTab(targetId) {
@@ -216,8 +216,37 @@ document.addEventListener('DOMContentLoaded', () => {
         consoleLogs.scrollTop = consoleLogs.scrollHeight;
     }
 
+    // 6b. Backend Warmup Function
+    const BACKEND_BASE = 'https://mashup-maker-backend.onrender.com';
+    let backendReady = false;
+
+    async function warmupBackend() {
+        // Silently ping the backend so it wakes from Render sleep
+        try {
+            const r = await fetch(BACKEND_BASE + '/', { method: 'GET', cache: 'no-store' });
+            if (r.ok) backendReady = true;
+        } catch (e) {
+            // Ignore – we'll retry properly before submission
+        }
+    }
+    warmupBackend();
+
+    async function ensureBackendAwake(onStatus) {
+        if (backendReady) return true;
+        const maxAttempts = 12; // 12 × 5s = 60s max wait
+        for (let i = 0; i < maxAttempts; i++) {
+            onStatus(`Waking up synthesis engine... (${i * 5}s / 60s max)`);
+            try {
+                const r = await fetch(BACKEND_BASE + '/', { method: 'GET', cache: 'no-store', mode: 'cors' });
+                if (r.ok) { backendReady = true; return true; }
+            } catch (e) { /* still sleeping */ }
+            await new Promise(res => setTimeout(res, 5000));
+        }
+        return false;
+    }
+
     // 7. Synthesis Trigger
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         // Validation
@@ -275,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     startTime: card.querySelector(`input[name="start-${id}"]`).value,
                     endTime: card.querySelector(`input[name="end-${id}"]`).value,
                     adjustments: {
-                        gain: card.querySelector('.track-gain').value / 100,
+                        gain: card.querySelector('.track-gain').value,
                         pan: card.querySelector('.track-pan').value,
                         lowcut: card.querySelector('.track-lowcut').value,
                         speed: card.querySelector('.track-speed').value / 100,
@@ -287,25 +316,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         logToStudio('ARCHITECT', `Designing ${data.songs.length}-element audio graph...`);
-        setTimeout(() => logToStudio('ENGINEER', 'Initializing parallel download streams...'), 1000);
-        setTimeout(() => logToStudio('ENGINEER', 'Fetching assets from distributed nodes...'), 2500);
 
-        const backendUrl = 'https://mashup-maker-backend.onrender.com/generate_mashup';
+        // Ensure backend is awake before sending the real request
+        logToStudio('ENGINEER', 'Checking synthesis engine status...');
+        const awake = await ensureBackendAwake((msg) => {
+            logToStudio('ENGINEER', msg);
+        });
 
-        fetch(backendUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(res => {
+        if (!awake) {
+            logToStudio('VP', 'CRITICAL ERROR: Backend failed to wake up after 60s. Please try again.', 'error');
+            logToStudio('PM', 'Aborting synthesis. Render server may be down.', 'error');
+            setTimeout(() => {
+                switchTab('direction-window');
+                loadingState.classList.add('hidden');
+            }, 5000);
+            return;
+        }
+
+        logToStudio('VP', 'Engine online. Dispatching synthesis job...');
+        logToStudio('ENGINEER', 'Initializing parallel download streams...');
+        setTimeout(() => logToStudio('ENGINEER', 'Fetching assets from distributed nodes...'), 1500);
+        setTimeout(() => logToStudio('ENGINEER', 'Processing audio segments (this may take 2-4 mins for 5 songs)...'), 4000);
+        setTimeout(() => logToStudio('ARCHITECT', 'Assembling crossfaded audio graph...'), 8000);
+
+        // 3-minute timeout for the actual mashup generation
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3 * 60 * 1000);
+
+        try {
+            const backendUrl = BACKEND_BASE + '/generate_mashup';
+            const res = await fetch(backendUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
             if (!res.ok) {
-                return res.json().catch(() => ({ details: `HTTP Error ${res.status}` }))
-                    .then(j => { throw new Error(j.details || "Synthesis Engine Failure"); });
+                let j;
+                try { j = await res.json(); } catch (ex) { j = { details: `HTTP Error ${res.status}` }; }
+                throw new Error(j.details || 'Synthesis Engine Failure');
             }
+
             logToStudio('VP', 'Synthesis verified. Commencing high-fidelity master...');
-            return res.blob();
-        })
-        .then(blob => {
+            const blob = await res.blob();
+
             logToStudio('PM', 'Quality Assurance passed. Masterpiece ready for delivery.');
             
             const url = window.URL.createObjectURL(blob);
@@ -333,19 +389,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadingState.classList.add('hidden');
                 successState.classList.remove('hidden');
             }, 1000);
-        })
-        .catch(err => {
+        } catch (err) {
+            clearTimeout(timeoutId);
             let errorMsg = err.message;
-            if (errorMsg === 'Failed to fetch') {
-                errorMsg = "Backend Unreachable. Please check connection or if Render service is awake.";
+            if (err.name === 'AbortError') {
+                errorMsg = 'Synthesis timed out after 3 minutes. Please try with fewer/shorter clips.';
+            } else if (errorMsg === 'Failed to fetch') {
+                errorMsg = 'Backend Unreachable. Please check connection or if Render service is awake.';
             }
             logToStudio('VP', `CRITICAL ERROR: ${errorMsg}`, 'error');
             logToStudio('PM', 'Aborting synthesis. Returning to design board.', 'error');
             setTimeout(() => {
                 switchTab('direction-window');
                 loadingState.classList.add('hidden');
-            }, 4000);
-        });
+            }, 5000);
+        }
     });
 
     // 8. Preset Auto-Adjustment
