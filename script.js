@@ -339,9 +339,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => logToStudio('ENGINEER', 'Processing audio segments (this may take 2-4 mins for 5 songs)...'), 4000);
         setTimeout(() => logToStudio('ARCHITECT', 'Assembling crossfaded audio graph...'), 8000);
 
-        // 3-minute timeout for the actual mashup generation
+        // 10-minute timeout for the actual mashup generation
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3 * 60 * 1000);
+        const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000);
 
         try {
             const backendUrl = BACKEND_BASE + '/generate_mashup';

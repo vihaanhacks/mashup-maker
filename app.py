@@ -178,7 +178,7 @@ def download_track(track, idx, session_id):
         cmd.append(out_path)
 
         print(f"[{idx}] Running FFmpeg: {' '.join(cmd[:6])}...", flush=True)
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
 
         if result.returncode != 0:
             print(f"[{idx}] FFmpeg stderr:\n{result.stderr[-1000:]}", flush=True)
@@ -274,11 +274,13 @@ def generate_mashup():
                     pass
 
                 if master is None:
+                    print(f"[{path}] Initializing master track", flush=True)
                     master = s
                 else:
                     cf = min(3000, len(master) // 4, len(s) // 4)
+                    print(f"[{path}] Appending to master with {cf}ms crossfade", flush=True)
                     master = master.append(s, crossfade=max(0, cf))
-                    print(f"Master now: {len(master)}ms", flush=True)
+                    print(f"[{path}] Master now: {len(master)}ms", flush=True)
 
             except Exception as e:
                 print(f"Mix error for {path}: {e}", flush=True)
