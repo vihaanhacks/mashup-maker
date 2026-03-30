@@ -204,10 +204,14 @@ class PMAgent:
         return out, None
 
 # --- WEB LAYER ---
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
 @app.route('/')
+def index():
+    return send_file('index.html')
+
+@app.route('/api/status')
 def status():
     h = MaintenanceAgent().check_health()
     return jsonify({'status': 'AGENCY SYSTEM OPERATIONAL', 'version': '5.0.Agentic', 'details': h})

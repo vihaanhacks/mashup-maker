@@ -220,13 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // 6b. Backend Discovery & Warmup
     const BACKEND_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://127.0.0.1:5000' 
-        : 'https://mashup-maker-backend.onrender.com';
+        : '';
     let backendReady = false;
 
     async function warmupBackend() {
         // Silently ping the backend so it wakes from Render sleep
         try {
-            const r = await fetch(BACKEND_BASE + '/', { method: 'GET', cache: 'no-store' });
+            const r = await fetch(BACKEND_BASE + '/api/status', { method: 'GET', cache: 'no-store' });
             if (r.ok) backendReady = true;
         } catch (e) {
             // Ignore – we'll retry properly before submission
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < maxAttempts; i++) {
             onStatus(`Checking Agentic Infrastructure... (${i * 5}s)`);
             try {
-                const r = await fetch(BACKEND_BASE + '/', { method: 'GET', cache: 'no-store', mode: 'cors' });
+                const r = await fetch(BACKEND_BASE + '/api/status', { method: 'GET', cache: 'no-store', mode: 'cors' });
                 if (r.ok) { backendReady = true; return true; }
             } catch (e) { /* still sleeping */ }
             await new Promise(res => setTimeout(res, 5000));
