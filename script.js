@@ -217,7 +217,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 6b. Backend Warmup Function
-    const BACKEND_BASE = 'https://mashup-maker-backend.onrender.com';
+    // 6b. Backend Discovery & Warmup
+    const BACKEND_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://127.0.0.1:5000' 
+        : 'https://mashup-maker-backend.onrender.com';
     let backendReady = false;
 
     async function warmupBackend() {
@@ -235,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (backendReady) return true;
         const maxAttempts = 12; // 12 × 5s = 60s max wait
         for (let i = 0; i < maxAttempts; i++) {
-            onStatus(`Waking up synthesis engine... (${i * 5}s / 60s max)`);
+            onStatus(`Checking Agentic Infrastructure... (${i * 5}s)`);
             try {
                 const r = await fetch(BACKEND_BASE + '/', { method: 'GET', cache: 'no-store', mode: 'cors' });
                 if (r.ok) { backendReady = true; return true; }
@@ -246,8 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 7. Synthesis Trigger
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    const synthesisHandler = async (e, aiMode = false) => {
+        if (e) e.preventDefault();
         
         // Validation
         const inputs = form.querySelectorAll('input[type="url"]');
@@ -265,9 +268,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const consoleLogs = document.getElementById('console-logs');
         if (consoleLogs) consoleLogs.innerHTML = '';
         
-        logToStudio('PM', 'Synthesis scope locked. Directorial guidance received.');
+        logToStudio('PM', aiMode ? 'Initializing INTELLIGENT AI SYNTHESIS... (Learning from piW4gHWy8z8)' : 'Synthesis scope locked. Directorial guidance received.');
+        if (aiMode) {
+            setTimeout(() => logToStudio('ARCHITECT', 'AI analyzing harmonic compatibility and breakpoints...'), 1000);
+            setTimeout(() => logToStudio('VP', 'Calibrating automated transition effects (Reverb, Echo, Bass)...'), 2500);
+        }
         
         const data = {
+            ai_mode: aiMode,
             songs: [],
             vibe: form.querySelector('input[name="vibe"]:checked').value,
             audioAdjustments: {
@@ -317,29 +325,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         logToStudio('ARCHITECT', `Designing ${data.songs.length}-element audio graph...`);
 
-        // Ensure backend is awake before sending the real request
+        // Ensure backend is awake
         logToStudio('ENGINEER', 'Checking synthesis engine status...');
         const awake = await ensureBackendAwake((msg) => {
             logToStudio('ENGINEER', msg);
         });
 
         if (!awake) {
-            logToStudio('VP', 'CRITICAL ERROR: Backend failed to wake up after 60s. Please try again.', 'error');
-            logToStudio('PM', 'Aborting synthesis. Render server may be down.', 'error');
-            setTimeout(() => {
-                switchTab('direction-window');
-                loadingState.classList.add('hidden');
-            }, 5000);
+            logToStudio('VP', 'CRITICAL ERROR: Backend failed to wake up. Check Antigravity logs.', 'error');
             return;
         }
 
-        logToStudio('VP', 'Engine online. Dispatching synthesis job...');
-        logToStudio('ENGINEER', 'Initializing parallel download streams...');
-        setTimeout(() => logToStudio('ENGINEER', 'Fetching assets from distributed nodes...'), 1500);
-        setTimeout(() => logToStudio('ENGINEER', 'Processing audio segments (this may take 2-4 mins for 5 songs)...'), 4000);
-        setTimeout(() => logToStudio('ARCHITECT', 'Assembling crossfaded audio graph...'), 8000);
+        logToStudio('VP', 'Engine connection established. Dispatching job...');
+        logToStudio('ENGINEER', 'Initializing high-speed extraction threads...');
+        setTimeout(() => logToStudio('ENGINEER', 'Fetching sonic assets from distributed nodes...'), 1500);
+        setTimeout(() => logToStudio('ENGINEER', 'Processing 5-song audio graph (est. 1-3 mins)...'), 4000);
+        setTimeout(() => logToStudio('ARCHITECT', 'Finalizing structural resonance...'), 8000);
 
-        // 10-minute timeout for the actual mashup generation
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000);
 
@@ -353,15 +355,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             clearTimeout(timeoutId);
 
-            if (!res.ok) {
-                let j;
-                try { j = await res.json(); } catch (ex) { j = { details: `HTTP Error ${res.status}` }; }
-                throw new Error(j.details || 'Synthesis Engine Failure');
-            }
+            if (!res.ok) throw new Error('Synthesis Engine Failure');
 
             logToStudio('VP', 'Synthesis verified. Commencing high-fidelity master...');
             const blob = await res.blob();
-
             logToStudio('PM', 'Quality Assurance passed. Masterpiece ready for delivery.');
             
             const url = window.URL.createObjectURL(blob);
@@ -372,39 +369,22 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('download-link').href = url;
             document.getElementById('download-link').download = `Mashup_Masterpiece_${Date.now()}.mp3`;
             
-            const vibeNames = {
-                'night_drive': 'Night Drive', 'ocean_mist': 'Ocean Mist', 'chill': 'Lofi Chill',
-                'hype': 'Club Hype', 'ambient': 'Ambient Space', 'cyberpunk': 'Cyberpunk',
-                'sunset_gold': 'Sunset Gold', 'midnight_rose': 'Midnight Rose', 'emerald_glass': 'Emerald Glass',
-                'retro_wave': 'Retro Wave', 'deep_house': 'Deep House', 'jazz_cafe': 'Jazz Cafe',
-                'trap_star': 'Trap Star', 'soul_essence': 'Soul Essence', 'future_bass': 'Future Bass',
-                'indian_classical': 'Hindustani Classical', 'indian_wedding': 'Indian Wedding',
-                'bhangra_blast': 'Bhangra Blast', 'bollywood_dreams': 'Bollywood Dreams',
-                'sufi_mystical': 'Sufi Mystical', 'ghats_varanasi': 'Ghats of Varanasi',
-                'cinematic': 'Cinematic Final', 'industrial': 'Industrial', 'vintage_vinyl': 'Vintage Vinyl'
-            };
-            document.getElementById('vibe-spec').textContent = vibeNames[data.vibe] || data.vibe;
-
             setTimeout(() => {
                 loadingState.classList.add('hidden');
                 successState.classList.remove('hidden');
             }, 1000);
         } catch (err) {
             clearTimeout(timeoutId);
-            let errorMsg = err.message;
-            if (err.name === 'AbortError') {
-                errorMsg = 'Synthesis timed out after 3 minutes. Please try with fewer/shorter clips.';
-            } else if (errorMsg === 'Failed to fetch') {
-                errorMsg = 'Backend Unreachable. Please check connection or if Render service is awake.';
-            }
-            logToStudio('VP', `CRITICAL ERROR: ${errorMsg}`, 'error');
-            logToStudio('PM', 'Aborting synthesis. Returning to design board.', 'error');
+            logToStudio('VP', `CRITICAL ERROR: ${err.message}`, 'error');
             setTimeout(() => {
                 switchTab('direction-window');
                 loadingState.classList.add('hidden');
             }, 5000);
         }
-    });
+    };
+
+    form.addEventListener('submit', (e) => synthesisHandler(e, false));
+    document.getElementById('ai-mashup-btn')?.addEventListener('click', (e) => synthesisHandler(null, true));
 
     // 8. Preset Auto-Adjustment
     const presets = {
