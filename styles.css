@@ -1612,3 +1612,24 @@ body.theme-gradient .vibe-label { color: #fff; }
 #thumb-cinematic { background: linear-gradient(135deg, #4b5563, #111827); }
 #thumb-industrial { background: linear-gradient(135deg, #374151, #000); }
 #thumb-vintage_vinyl { background: linear-gradient(135deg, #78350f, #2d1305); }
+
+/* Additional Styling for 10-Track Limit */
+.small-btn {
+    font-size: 0.85rem !important;
+    padding: 0.8rem 1.5rem !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 4px;
+}
+#add-track-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.8) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+#remove-effects-btn:hover {
+    background: rgba(255, 100, 100, 0.1) !important;
+    border-color: rgba(255, 100, 100, 0.8) !important;
+    transform: translateY(-2px);
+}
+

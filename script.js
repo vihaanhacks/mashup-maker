@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { label: 'Suite Element 5 (Atmospheric)', icon: '✨', placeholder: 'https://youtube.com/watch?v=...' }
         ];
 
-        config.forEach((c, i) => {
+        const createTrackCard = (c, i) => {
             const card = document.createElement('div');
             card.className = 'song-card';
             card.dataset.id = i;
@@ -149,7 +149,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             tracksContainer.appendChild(card);
-        });
+        };
+
+        config.forEach((c, i) => createTrackCard(c, i));
+
+        let currentCount = 5;
+        const addTrackBtn = document.getElementById('add-track-btn');
+        const countBadge = document.getElementById('track-count-badge');
+        
+        if (addTrackBtn) {
+            addTrackBtn.addEventListener('click', () => {
+                if (currentCount >= 10) return;
+                const i = currentCount;
+                const c = { label: `Suite Element ${i + 1} (Additional)`, icon: '🎧', placeholder: 'https://youtube.com/watch?v=...' };
+                createTrackCard(c, i);
+                currentCount++;
+                
+                if (countBadge) countBadge.textContent = `(${currentCount}/10)`;
+                if (currentCount >= 10) {
+                    addTrackBtn.style.opacity = '0.5';
+                    addTrackBtn.style.cursor = 'not-allowed';
+                    addTrackBtn.textContent = 'Maximum Capacity Reached (10/10)';
+                }
+            });
+        }
 
         // Delegate deletion & Full Track Toggle
         tracksContainer.addEventListener('click', (e) => {
@@ -157,7 +180,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = e.target.closest('.song-card');
                 card.style.opacity = '0';
                 card.style.transform = 'scale(0.9)';
-                setTimeout(() => card.remove(), 300);
+                setTimeout(() => {
+                    card.remove();
+                    if (currentCount > 0) {
+                        currentCount--;
+                        if (countBadge) countBadge.textContent = `(${currentCount}/10)`;
+                        if (currentCount < 10 && addTrackBtn) {
+                            addTrackBtn.style.display = 'inline-flex';
+                            addTrackBtn.style.opacity = '1';
+                            addTrackBtn.style.cursor = 'pointer';
+                            addTrackBtn.innerHTML = `+ Add Element <span id="track-count-badge" style="opacity: 0.6; font-size: 0.9em;">(${currentCount}/10)</span>`;
+                        }
+                    }
+                }, 300);
             }
         });
 
@@ -218,9 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 6b. Backend Warmup Function
     // 6b. Backend Discovery & Warmup
-    const BACKEND_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-        ? 'http://127.0.0.1:5000' 
-        : '';
+    const BACKEND_BASE = '';
     let backendReady = false;
 
     async function warmupBackend() {
@@ -249,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 7. Synthesis Trigger
-    const synthesisHandler = async (e, aiMode = false) => {
+    const synthesisHandler = async (e, aiMode = false, removeEffects = false) => {
         if (e) e.preventDefault();
         
         // Validation
@@ -268,14 +301,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const consoleLogs = document.getElementById('console-logs');
         if (consoleLogs) consoleLogs.innerHTML = '';
         
-        logToStudio('PM', aiMode ? 'Initializing INTELLIGENT AI SYNTHESIS... (Learning from piW4gHWy8z8)' : 'Synthesis scope locked. Directorial guidance received.');
-        if (aiMode) {
-            setTimeout(() => logToStudio('ARCHITECT', 'AI analyzing harmonic compatibility and breakpoints...'), 1000);
-            setTimeout(() => logToStudio('VP', 'Calibrating automated transition effects (Reverb, Echo, Bass)...'), 2500);
+        if (removeEffects) {
+             logToStudio('PM', 'Re-compiling session as Pure Audio Merge (AI Effects Bypassed)...');
+             logToStudio('ARCHITECT', 'Transitioning to strict chronological sequence with 0s crossfade.');
+        } else {
+             logToStudio('PM', aiMode ? 'Initializing INTELLIGENT AI SYNTHESIS... (Learning from piW4gHWy8z8)' : 'Synthesis scope locked. Directorial guidance received.');
+             if (aiMode) {
+                 setTimeout(() => logToStudio('ARCHITECT', 'AI analyzing harmonic compatibility and breakpoints...'), 1000);
+                 setTimeout(() => logToStudio('VP', 'Calibrating automated transition effects (Reverb, Echo, Bass)...'), 2500);
+             }
         }
         
         const data = {
             ai_mode: aiMode,
+            removeEffects: removeEffects,
             songs: [],
             vibe: form.querySelector('input[name="vibe"]:checked').value,
             audioAdjustments: {
@@ -383,8 +422,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    form.addEventListener('submit', (e) => synthesisHandler(e, false));
-    document.getElementById('ai-mashup-btn')?.addEventListener('click', (e) => synthesisHandler(null, true));
+    form.addEventListener('submit', (e) => synthesisHandler(e, false, false));
+    document.getElementById('ai-mashup-btn')?.addEventListener('click', (e) => synthesisHandler(null, true, false));
+    document.getElementById('remove-effects-btn')?.addEventListener('click', (e) => synthesisHandler(null, false, true));
 
     // 8. Preset Auto-Adjustment
     const presets = {

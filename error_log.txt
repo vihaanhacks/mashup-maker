@@ -1,0 +1,21 @@
+
+--- ERROR Tue Mar 31 17:47:36 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 149, in mix
+    try:
+    
+OSError: [Errno 22] Invalid argument
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 263, in generate_mashup
+    pm = PMAgent(d)
+           ~~~~~^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 238, in run_synthesis
+    remove_effects = bool(self.data.get('removeEffects', False))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 198, in mix
+    except Exception:
+        ^^^^^^^^^^^^^
+OSError: [Errno 22] Invalid argument

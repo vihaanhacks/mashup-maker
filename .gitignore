@@ -11,3 +11,5 @@ __pycache__/
 *.log
 .vscode/
 .DS_Store
+node_modules
+node_modules
