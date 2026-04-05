@@ -99,7 +99,14 @@ class EngineerAgent:
         for s_idx, opts_strat in enumerate(strategies):
             try:
                 # Library Mode
-                opts = {'quiet': True, 'nocheckcertificate': True, 'geo_bypass': True, 'no_warnings': True, **opts_strat}
+                opts = {
+                    'quiet': True, 
+                    'nocheckcertificate': True, 
+                    'geo_bypass': True, 
+                    'no_warnings': True, 
+                    'socket_timeout': 15, # Prevent hang on bad/DRM streams
+                    **opts_strat
+                }
                 if js_runtime: opts['js_runtime'] = js_runtime
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     inf = ydl.extract_info(url, download=False)
@@ -118,10 +125,15 @@ class EngineerAgent:
                         if int(adj.get('lowcut', 0)) > 0: flts.append(f"highpass=f={int(adj['lowcut'])*20}")
                         if flts: cmd += ['-filter:a', ",".join(flts)]
                         cmd.append(out)
-                        subprocess.run(cmd, capture_output=True, timeout=120)
+                        subprocess.run(cmd, capture_output=True, timeout=90)
                         if os.path.exists(out) and os.path.getsize(out) > 1000: return out, track
             except Exception as e:
-                print(f"[Engineer] Strategy {s_idx} failed: {e}", flush=True)
+                err_msg = str(e).lower()
+                print(f"[Engineer] Strategy {s_idx} failed for Node {idx+1}: {e}", flush=True)
+                # Don't keep trying if it's DRM, Private, or requires sign-in
+                if "drm" in err_msg or "private" in err_msg or "sign in" in err_msg or "age" in err_msg:
+                    print(f"[Engineer] Node {idx+1} is strictly blocked (DRM/Auth). Skipping strategies.", flush=True)
+                    break
 
         # --- CLI FALLBACK (Last Resort for SSL/Block) ---
         try:
@@ -216,14 +228,36 @@ class MixingAgent:
 
                 # --- Studio Tweaks ---
                 adj = info.get('adjustments', {})
-                gain = float(adj.get('gain', 100)) / 100.0
+                try:
+                    gain_raw = adj.get('gain', 100)
+                    gain = float(gain_raw if gain_raw != "" else 100) / 100.0
+                except: gain = 1.0
                 if gain != 1.0: s = s + (10 * math.log10(max(0.001, gain)))
-                pan = float(adj.get('pan', 0)) / 100.0
+                
+                try:
+                    pan_raw = adj.get('pan', 0)
+                    pan = float(pan_raw if pan_raw != "" else 0) / 100.0
+                except: pan = 0
                 if pan != 0: s = s.pan(max(-1.0, min(1.0, pan)))
 
-                fi = int(sparams.get('fade_in', 1500))
-                fo = int(sparams.get('fade_out', 1500))
-                s = s.fade_in(min(fi, len(s)//4)).fade_out(min(fo, len(s)//4))
+                try:
+                    fi_raw = sparams.get('fade_in', 1500)
+                    fi = int(fi_raw if fi_raw != "" else 1500)
+                except: fi = 1500
+                
+                try:
+                    fo_raw = sparams.get('fade_out', 1500)
+                    fo = int(fo_raw if fo_raw != "" else 1500)
+                except: fo = 1500
+                
+                try:
+                    # Defensive: ensure these are within clip bounds and not None
+                    dur_in = max(0, min(fi, len(s)//2))
+                    dur_out = max(0, min(fo, len(s)//2))
+                    print(f"[Mixer Debug] Fade parameters: {dur_in}ms in, {dur_out}ms out (Track Len: {len(s)}ms)", flush=True)
+                    s = s.fade_in(dur_in).fade_out(dur_out)
+                except Exception as fe:
+                    print(f"[Mixer Warning] Fade failed on element {i+1}: {fe}", flush=True)
 
                 if master is None:
                     master = s
@@ -244,7 +278,8 @@ class MixingAgent:
             try:
                 master = effects.compress_dynamic_range(master)
                 master = effects.normalize(master)
-                master_gain = float(sparams.get('limiter', 100)) / 100.0
+                raw_lim = sparams.get('limiter', 100)
+                master_gain = float(raw_lim if raw_lim != "" else 100) / 100.0
                 if master_gain != 1.0: master = master + (10 * math.log10(max(0.001, master_gain)))
             except: pass
         return master
@@ -278,8 +313,11 @@ class PMAgent:
         remove_effects = bool(self.data.get('removeEffects', False))
         master = self.mix_agent.mix(sf, self.sid, self.data.get('audioAdjustments', {}), ai, remove_effects)
         if not master: return None, "Mix Failure"
+        
         out = os.path.join(TEMP_DIR, f"master_{self.sid}.mp3")
+        print(f"[PMAgent] Final Synthesis complete ({len(master)/1000:.1f}s). Commencing high-fidelity MP3 export...", flush=True)
         master.export(out, format="mp3", bitrate="192k")
+        print(f"[PMAgent] Masterpiece Exported successfully to {out}", flush=True)
         return out, None
 
 # --- WEB LAYER ---
@@ -312,4 +350,5 @@ def generate_mashup():
         return jsonify({"details": str(ex), "trace": traceback.format_exc()}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
+    # Threaded=True is essential for heartbeat Status requests while synthesis is running
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False, threaded=True)

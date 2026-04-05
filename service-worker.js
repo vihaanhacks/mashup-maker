@@ -16,6 +16,9 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  if (event.request.url.includes('/api/')) {
+    return; // Fast-fail to network
+  }
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request);

@@ -251,9 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
         consoleLogs.scrollTop = consoleLogs.scrollHeight;
     }
 
-    // 6b. Backend Warmup Function
     // 6b. Backend Discovery & Warmup
-    const BACKEND_BASE = '';
+    // Directing to local 5000 if opened as a file, otherwise using absolute relative path
+    const BACKEND_BASE = (window.location.protocol === 'file:') ? 'http://127.0.0.1:5000' : '';
     let backendReady = false;
 
     async function warmupBackend() {
