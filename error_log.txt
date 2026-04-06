@@ -19,3 +19,23 @@ Traceback (most recent call last):
     except Exception:
         ^^^^^^^^^^^^^
 OSError: [Errno 22] Invalid argument
+
+--- ERROR Mon Apr  6 16:42:46 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 389, in generate_mashup
+    p, e = pm.run_synthesis()
+           ~~~~~~~~~~~~~~~~^^
+  File "C:\Vihaan\mashup-maker\app.py", line 338, in run_synthesis
+    p, m = f.result()
+           ~~~~~~~~^^
+  File "C:\Users\vishri\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\vishri\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\vishri\AppData\Local\Programs\Python\Python313\Lib\concurrent\futures\thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Vihaan\mashup-maker\app.py", line 68, in extract_audio
+    url = re.sub(r'([&?])list=[^&]*', '', url)
+                                          ^^^
+UnboundLocalError: cannot access local variable 'url' where it is not associated with a value

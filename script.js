@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 createTrackCard(c, i);
                 currentCount++;
                 
-                if (countBadge) countBadge.textContent = `(${currentCount}/10)`;
+                if (countBadge) countBadge.innerHTML = `+ Add Element <span style="opacity: 0.6; font-size: 0.9em;">(${currentCount}/10)</span>`;
                 if (currentCount >= 10) {
                     addTrackBtn.style.opacity = '0.5';
                     addTrackBtn.style.cursor = 'not-allowed';
@@ -238,15 +238,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const entry = document.createElement('div');
         entry.className = `log-entry ${type}`;
         
-        const agentColors = {
-            'PM': '#ffd700',
-            'ARCHITECT': '#00d2ff',
-            'ENGINEER': '#34d399',
-            'VP': '#ff4d4d'
+        const agentStyles = {
+            'PM': 'color: #ffd700; font-weight: 800; border-left: 2px solid #ffd700; padding-left: 8px;',
+            'ARCHITECT': 'color: #00d2ff; font-weight: 800; border-left: 2px solid #00d2ff; padding-left: 8px;',
+            'ENGINEER': 'color: #34d399; font-weight: 800; border-left: 2px solid #34d399; padding-left: 8px;',
+            'VP': 'color: #ff4d4d; font-weight: 800; border-left: 2px solid #ff4d4d; padding-left: 8px;'
         };
         
-        const color = agentColors[agent] || '#fff';
-        entry.innerHTML = `<span style="color: ${color}; font-weight: 700;">${agent}:</span> ${message}`;
+        const style = agentStyles[agent] || 'color: #fff; opacity: 0.8;';
+        entry.innerHTML = `<span style="${style}">${agent}</span> <span class="log-msg">${message}</span>`;
         consoleLogs.appendChild(entry);
         consoleLogs.scrollTop = consoleLogs.scrollHeight;
     }
@@ -325,7 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 pitch: document.getElementById('pitch-level').value,
                 reverb: document.getElementById('reverb-level').value,
                 delay: document.getElementById('delay-level').value,
-                chorus: document.getElementById('chorus-level').value,
+                harmonic_chorus: document.getElementById('harmonic-chorus-level').value,
+                chorus_depth: document.getElementById('chorus-depth-level').value,
                 phaser: document.getElementById('phaser-level').value,
                 distortion: document.getElementById('distortion-level').value,
                 bitcrush: document.getElementById('bitcrush-level').value,
@@ -394,7 +395,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             clearTimeout(timeoutId);
 
-            if (!res.ok) throw new Error('Synthesis Engine Failure');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({ details: 'Unknown Engine Failure' }));
+                throw new Error(errData.details || 'Synthesis Engine Failure');
+            }
 
             logToStudio('VP', 'Synthesis verified. Commencing high-fidelity master...');
             const blob = await res.blob();
@@ -414,11 +418,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1000);
         } catch (err) {
             clearTimeout(timeoutId);
-            logToStudio('VP', `CRITICAL ERROR: ${err.message}`, 'error');
+            const errMsg = err.name === 'AbortError' ? 'Synthesis Timed Out (10 min limit exceeded)' : err.message;
+            logToStudio('VP', `CRITICAL ERROR: ${errMsg}`, 'error');
+            logToStudio('PM', 'Please verify your links and curation parameters.', 'info');
+            
+            // Don't auto-switch back too quickly if it's a real error, let them read it
+            const delay = err.name === 'AbortError' ? 10000 : 7000;
             setTimeout(() => {
-                switchTab('direction-window');
-                loadingState.classList.add('hidden');
-            }, 5000);
+                if (loadingState.classList.contains('active') || loadingState.style.display !== 'none') {
+                    switchTab('direction-window');
+                    loadingState.classList.add('hidden');
+                }
+            }, delay);
         }
     };
 
@@ -428,14 +439,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 8. Preset Auto-Adjustment
     const presets = {
-        'classical': { bass: 2, mid: 3, treble: 5, speed: 100, pitch: 0, reverb: 40, delay: 0, chorus: 10, phaser: 0, distortion: 0, bitcrush: 0, tremolo: 0, flanger: 0, compression: 20, limiter: 90, width: 120, highpass: 20, lowpass: 90, fade_in: 2000, fade_out: 2000 },
-        'wedding': { bass: 5, mid: 2, treble: 4, speed: 105, pitch: 0, reverb: 20, delay: 10, chorus: 20, phaser: 0, distortion: 5, bitcrush: 0, tremolo: 0, flanger: 0, compression: 40, limiter: 95, width: 150, highpass: 10, lowpass: 100, fade_in: 1000, fade_out: 1000 },
-        'bollytech': { bass: 8, mid: 0, treble: 6, speed: 110, pitch: 0, reverb: 30, delay: 15, chorus: 30, phaser: 10, distortion: 10, bitcrush: 5, tremolo: 0, flanger: 10, compression: 60, limiter: 98, width: 160, highpass: 30, lowpass: 85, fade_in: 500, fade_out: 500 },
-        'zen': { bass: 0, mid: 2, treble: 2, speed: 85, pitch: -2, reverb: 80, delay: 40, chorus: 40, phaser: 20, distortion: 0, bitcrush: 0, tremolo: 10, flanger: 0, compression: 10, limiter: 80, width: 180, highpass: 100, lowpass: 50, fade_in: 5000, fade_out: 5000 },
-        'inferno': { bass: 12, mid: -2, treble: 8, speed: 128, pitch: 0, reverb: 10, delay: 20, chorus: 0, phaser: 30, distortion: 40, bitcrush: 20, tremolo: 0, flanger: 30, compression: 80, limiter: 100, width: 140, highpass: 40, lowpass: 95, fade_in: 200, fade_out: 200 },
-        'cinematic': { bass: 3, mid: 1, treble: 3, speed: 95, pitch: 0, reverb: 80, delay: 30, chorus: 10, phaser: 0, distortion: 2, bitcrush: 0, tremolo: 5, flanger: 0, compression: 30, limiter: 90, width: 180, highpass: 5, lowpass: 80, fade_in: 3000, fade_out: 3000 },
-        'lofi': { bass: 4, mid: -1, treble: -2, speed: 90, pitch: -1, reverb: 30, delay: 10, chorus: 20, phaser: 0, distortion: 15, bitcrush: 40, tremolo: 20, flanger: 0, compression: 20, limiter: 85, width: 80, highpass: 30, lowpass: 60, fade_in: 2000, fade_out: 2000 },
-        'ethereal': { bass: -5, mid: 0, treble: 10, speed: 75, pitch: 4, reverb: 100, delay: 60, chorus: 80, phaser: 50, distortion: 0, bitcrush: 5, tremolo: 40, flanger: 20, compression: 10, limiter: 70, width: 200, highpass: 50, lowpass: 40, fade_in: 8000, fade_out: 8000 }
+        'classical': { bass: 2, mid: 3, treble: 5, speed: 100, pitch: 0, reverb: 40, delay: 0, harmonic_chorus: 10, chorus_depth: 10, phaser: 0, distortion: 0, bitcrush: 0, tremolo: 0, flanger: 0, compression: 20, limiter: 90, width: 120, highpass: 20, lowpass: 90, fade_in: 2000, fade_out: 2000 },
+        'wedding': { bass: 5, mid: 2, treble: 4, speed: 105, pitch: 0, reverb: 20, delay: 10, harmonic_chorus: 20, chorus_depth: 20, phaser: 0, distortion: 5, bitcrush: 0, tremolo: 0, flanger: 0, compression: 40, limiter: 95, width: 150, highpass: 10, lowpass: 100, fade_in: 1000, fade_out: 1000 },
+        'bollytech': { bass: 8, mid: 0, treble: 6, speed: 110, pitch: 0, reverb: 30, delay: 15, harmonic_chorus: 30, chorus_depth: 30, phaser: 10, distortion: 10, bitcrush: 5, tremolo: 0, flanger: 10, compression: 60, limiter: 98, width: 160, highpass: 30, lowpass: 85, fade_in: 500, fade_out: 500 },
+        'zen': { bass: 0, mid: 2, treble: 2, speed: 85, pitch: -2, reverb: 80, delay: 40, harmonic_chorus: 40, chorus_depth: 40, phaser: 20, distortion: 0, bitcrush: 0, tremolo: 10, flanger: 0, compression: 10, limiter: 80, width: 180, highpass: 100, lowpass: 50, fade_in: 5000, fade_out: 5000 },
+        'inferno': { bass: 12, mid: -2, treble: 8, speed: 128, pitch: 0, reverb: 10, delay: 20, harmonic_chorus: 0, chorus_depth: 0, phaser: 30, distortion: 40, bitcrush: 20, tremolo: 0, flanger: 30, compression: 80, limiter: 100, width: 140, highpass: 40, lowpass: 95, fade_in: 200, fade_out: 200 },
+        'cinematic': { bass: 3, mid: 1, treble: 3, speed: 95, pitch: 0, reverb: 80, delay: 30, harmonic_chorus: 10, chorus_depth: 10, phaser: 0, distortion: 2, bitcrush: 0, tremolo: 5, flanger: 0, compression: 30, limiter: 90, width: 180, highpass: 5, lowpass: 80, fade_in: 3000, fade_out: 3000 },
+        'lofi': { bass: 4, mid: -1, treble: -2, speed: 90, pitch: -1, reverb: 30, delay: 10, harmonic_chorus: 20, chorus_depth: 20, phaser: 0, distortion: 15, bitcrush: 40, tremolo: 20, flanger: 0, compression: 20, limiter: 85, width: 80, highpass: 30, lowpass: 60, fade_in: 2000, fade_out: 2000 },
+        'ethereal': { bass: -5, mid: 0, treble: 10, speed: 75, pitch: 4, reverb: 100, delay: 60, harmonic_chorus: 80, chorus_depth: 80, phaser: 50, distortion: 0, bitcrush: 5, tremolo: 40, flanger: 20, compression: 10, limiter: 70, width: 200, highpass: 50, lowpass: 40, fade_in: 8000, fade_out: 8000 }
     };
 
     document.querySelectorAll('.btn-preset').forEach(btn => {
@@ -464,12 +475,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!input || !display) return;
         
         const val = parseInt(input.value);
+        const isDefault = (['bass', 'mid', 'treble', 'pitch', 'reverb', 'delay', 'harmonic-chorus', 'chorus-depth', 'phaser', 'distortion', 'bitcrush', 'tremolo', 'flanger', 'compression', 'highpass', 'fade-in', 'fade-out'].includes(id) && val === 0) || 
+                          (id === 'speed' && val === 100) || 
+                          (id === 'limiter' && val === 100) || 
+                          (id === 'width' && val === 100) || 
+                          (id === 'lowpass' && val === 100);
+
+        display.style.color = isDefault ? 'var(--text-muted)' : 'var(--primary)';
+        display.style.fontWeight = isDefault ? '400' : '800';
+
         if (['bass', 'mid', 'treble'].includes(id)) display.textContent = (val > 0 ? `+${val}` : val) + 'dB';
         else if (id === 'speed') display.textContent = (val / 100).toFixed(2) + 'x';
         else if (id === 'pitch') display.textContent = (val > 0 ? `+${val}` : val) + 'st';
         else if (id === 'reverb') display.textContent = val === 0 ? 'Off' : (val < 40 ? 'Slight' : (val < 80 ? 'Rich' : 'Infinite'));
         else if (id === 'delay') display.textContent = val === 0 ? 'Off' : val + '%';
-        else if (id === 'chorus') display.textContent = val === 0 ? 'Off' : val + '%';
+        else if (id === 'harmonic-chorus') display.textContent = val === 0 ? 'Off' : val + '%';
+        else if (id === 'chorus-depth') display.textContent = val === 0 ? 'Off' : val + '%';
         else if (id === 'phaser') display.textContent = val === 0 ? 'Off' : val + '%';
         else if (id === 'distortion') display.textContent = val === 0 ? 'Clean' : val + '%';
         else if (id === 'bitcrush') display.textContent = val === 0 ? 'Hi-Fi' : val + 'bit';
@@ -483,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (id === 'lowpass') display.textContent = val === 100 ? 'Off' : (20000 - (val * 180)) + 'Hz';
     }
 
-    const allParams = ['bass', 'mid', 'treble', 'speed', 'pitch', 'reverb', 'delay', 'chorus', 'phaser', 'distortion', 'bitcrush', 'tremolo', 'flanger', 'compression', 'limiter', 'width', 'fade-in', 'fade-out', 'highpass', 'lowpass'];
+    const allParams = ['bass', 'mid', 'treble', 'speed', 'pitch', 'reverb', 'delay', 'harmonic-chorus', 'chorus-depth', 'phaser', 'distortion', 'bitcrush', 'tremolo', 'flanger', 'compression', 'limiter', 'width', 'fade-in', 'fade-out', 'highpass', 'lowpass'];
     allParams.forEach(id => {
         const el = document.getElementById(`${id}-level`);
         if (el) el.addEventListener('input', () => updateSliderDisplay(id));
@@ -523,9 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bass-level').value = 8;
         document.getElementById('lowpass-level').value = 70;
         document.getElementById('reverb-level').value = 60;
-        document.getElementById('chorus-level').value = 40;
+        document.getElementById('harmonic-chorus-level').value = 40;
         
-        ['bass', 'lowpass', 'reverb', 'chorus'].forEach(updateSliderDisplay);
+        ['bass', 'lowpass', 'reverb', 'harmonic-chorus'].forEach(updateSliderDisplay);
         
         setTimeout(() => {
             switchTab('studio-window');
@@ -552,5 +573,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    console.log("Mashup Maker Operational.");
+    console.log("Mashup Maker Operational. Sliders verified: ", allParams.filter(id => document.getElementById(`${id}-level`)));
 });

@@ -1112,15 +1112,16 @@ textarea {
 }
 
 .agent-console {
-    background: #000;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #050505;
+    border: 1px solid rgba(197, 160, 89, 0.2);
     width: 100%;
-    max-width: 700px;
+    max-width: 800px;
     margin: 3rem auto;
-    border-radius: 4px;
+    border-radius: 0;
     overflow: hidden;
     text-align: left;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    font-family: 'Space Grotesk', sans-serif;
 }
 
 .console-header {
@@ -1150,19 +1151,27 @@ textarea {
 }
 
 .console-body {
-    padding: 1.5rem;
-    height: 180px;
+    padding: 2rem;
+    height: 250px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.8rem;
+    background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
 }
 
 .log-entry {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
-    line-height: 1.4;
-    animation: fadeIn 0.3s ease-out;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    animation: fadeIn 0.4s cubic-bezier(0.2, 0, 0, 1);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.log-msg {
+    opacity: 0.9;
 }
 
 .log-agent {
@@ -1585,33 +1594,32 @@ body.theme-gradient .vibe-label { color: #fff; }
     }
 }
 
-/* Vibe Thumbnail Image Mappings */
-#thumb-night_drive { background-image: url('assets/vibes/vibe_night_drive_1774008710394.png'); }
-#thumb-ocean_mist { background-image: url('assets/vibes/vibe_ocean_mist_1774008727751.png'); }
-#thumb-chill { background-image: url('assets/vibes/vibe_lofi_chill_1774008745219.png'); }
-#thumb-hype { background-image: url('assets/vibes/vibe_club_hype_1774008766074.png'); }
-#thumb-ambient { background-image: url('assets/vibes/vibe_ambient_space_1774008784706.png'); }
-#thumb-cyberpunk { background-image: url('assets/vibes/vibe_cyberpunk_1774008804161.png'); }
-#thumb-sunset_gold { background-image: url('assets/vibes/vibe_sunset_gold_1774008824481.png'); }
-#thumb-midnight_rose { background-image: url('assets/vibes/vibe_midnight_rose_1774008842210.png'); }
-#thumb-emerald_glass { background-image: url('assets/vibes/vibe_emerald_glass_1774008867379.png'); }
-#thumb-retro_wave { background-image: url('assets/vibes/vibe_retro_wave_1774008885885.png'); }
-#thumb-deep_house { background-image: url('assets/vibes/vibe_deep_house_1774008903977.png'); }
-#thumb-jazz_cafe { background-image: url('assets/vibes/vibe_jazz_cafe_1774008923980.png'); }
-#thumb-indian_classical { background-image: url('assets/vibes/vibe_indian_classical_hindustani_1774008944117.png'); }
-#thumb-indian_wedding { background-image: url('assets/vibes/vibe_indian_wedding_1774008967013.png'); }
-#thumb-bhangra_blast { background-image: url('assets/vibes/vibe_bhangra_blast_1774008986359.png'); }
-#thumb-bollywood_dreams { background-image: url('assets/vibes/vibe_bollywood_dreams_1774009010206.png'); }
-#thumb-sufi_mystical { background-image: url('assets/vibes/vibe_sufi_mystical_1774009032311.png'); }
-
-/* Generic Placeholders for missing generation */
-#thumb-ghats_varanasi { background: linear-gradient(135deg, #f59e0b, #92400e); }
-#thumb-trap_star { background: linear-gradient(135deg, #4c1d95, #000); }
-#thumb-soul_essence { background: linear-gradient(135deg, #ec4899, #831843); }
-#thumb-future_bass { background: linear-gradient(135deg, #06b6d4, #1e3a8a); }
-#thumb-cinematic { background: linear-gradient(135deg, #4b5563, #111827); }
-#thumb-industrial { background: linear-gradient(135deg, #374151, #000); }
-#thumb-vintage_vinyl { background: linear-gradient(135deg, #78350f, #2d1305); }
+/* Vibe Thumbnail Image Mappings - Clean Names */
+#thumb-night_drive { background-image: url('assets/vibes/vibe_night_drive.png'); }
+#thumb-ocean_mist { background-image: url('assets/vibes/vibe_ocean_mist.png'); }
+#thumb-chill { background-image: url('assets/vibes/vibe_lofi_chill.png'); }
+#thumb-hype { background-image: url('assets/vibes/vibe_club_hype.png'); }
+#thumb-ambient { background-image: url('assets/vibes/vibe_ambient_space.png'); }
+#thumb-cyberpunk { background-image: url('assets/vibes/vibe_cyberpunk.png'); }
+#thumb-sunset_gold { background-image: url('assets/vibes/vibe_sunset_gold.png'); }
+#thumb-midnight_rose { background-image: url('assets/vibes/vibe_midnight_rose.png'); }
+#thumb-emerald_glass { background-image: url('assets/vibes/vibe_emerald_glass.png'); }
+#thumb-retro_wave { background-image: url('assets/vibes/vibe_retro_wave.png'); }
+#thumb-deep_house { background-image: url('assets/vibes/vibe_deep_house.png'); }
+#thumb-jazz_cafe { background-image: url('assets/vibes/vibe_jazz_cafe.png'); }
+#thumb-indian_classical { background-image: url('assets/vibes/vibe_indian_classical.png'); }
+#thumb-indian_wedding { background-image: url('assets/vibes/vibe_indian_wedding.png'); }
+#thumb-bhangra_blast { background-image: url('assets/vibes/vibe_bhangra_blast.png'); }
+#thumb-bollywood_dreams { background-image: url('assets/vibes/vibe_bollywood_dreams.png'); }
+#thumb-sufi_mystical { background-image: url('assets/vibes/vibe_sufi_mystical.png'); }
+#thumb-ghats_varanasi { background-image: url('assets/vibes/vibe_ghats_varanasi.png'); }
+#thumb-trap_star { background-image: url('assets/vibes/vibe_trap_star.png'); }
+#thumb-soul_essence { background-image: url('assets/vibes/vibe_soul_essence.png'); }
+#thumb-future_bass { background-image: url('assets/vibes/vibe_future_bass.png'); }
+#thumb-cinematic { background-image: url('assets/vibes/vibe_cinematic.png'); }
+#thumb-industrial { background-image: url('assets/vibes/vibe_industrial.png'); }
+#thumb-vintage_vinyl { background-image: url('assets/vibes/vibe_vintage_vinyl.png'); }
+#thumb-retro_wave { background-image: url('assets/vibes/vibe_retro_wave.png'); }
 
 /* Additional Styling for 10-Track Limit */
 .small-btn {

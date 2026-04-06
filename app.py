@@ -13,6 +13,8 @@ import ssl
 try:
     os.environ['PYTHONHTTPSVERIFY'] = '0'
     ssl._create_default_https_context = ssl._create_unverified_context
+    import sys
+    sys.stdout.reconfigure(line_buffering=True)
 except: pass
 
 from flask import Flask, request, send_file, jsonify
@@ -64,6 +66,12 @@ class EngineerAgent:
     def extract_audio(self, track, idx):
         url = track.get('link', '').strip()
         if not url: return None, "No URL"
+
+        # Clean URL: strip playlist and other unnecessary params
+        url = re.sub(r'([&?])list=[^&]*', '', url)
+        url = re.sub(r'([&?])start_radio=[^&]*', '', url)
+        url = url.replace('?&', '?').replace('&&', '&').strip('?').strip('&')
+
         adj = track.get('adjustments', {})
         is_full = bool(adj.get('full', False))
         speed = float(adj.get('speed', 1.0))
@@ -91,9 +99,10 @@ class EngineerAgent:
         except: pass
 
         strategies = [
-            {'format': 'ba/b', 'extractor_args': {'youtube': {'player_client': ['ios']}}},
-            {'format': 'ba/b', 'extractor_args': {'youtube': {'player_client': ['android']}}},
-            {'format': 'ba/b', 'user_agent': random.choice(self.user_agents)}
+            {'format': 'bestaudio/best', 'extractor_args': {'youtube': {'player_client': ['ios']}}},
+            {'format': 'bestaudio/best', 'extractor_args': {'youtube': {'player_client': ['android']}}},
+            {'format': 'bestaudio/best', 'user_agent': random.choice(self.user_agents)},
+            {'format': 'ba/b'}, # Broadest fallback
         ]
 
         for s_idx, opts_strat in enumerate(strategies):
@@ -104,7 +113,10 @@ class EngineerAgent:
                     'nocheckcertificate': True, 
                     'geo_bypass': True, 
                     'no_warnings': True, 
-                    'socket_timeout': 15, # Prevent hang on bad/DRM streams
+                    'socket_timeout': 30, 
+                    'extract_flat': False,
+                    'skip_download': True,
+                    'noplaylist': True,
                     **opts_strat
                 }
                 if js_runtime: opts['js_runtime'] = js_runtime
@@ -117,7 +129,7 @@ class EngineerAgent:
                     
                     if s_url:
                         # FFMPEG also gets a certificate ignore flag if possible
-                        cmd = [FFMPEG_PATH, '-y', '-hide_banner', '-loglevel', 'error']
+                        cmd = [FFMPEG_PATH, '-y', '-hide_banner', '-loglevel', 'error', '-timeout', '10000000']
                         if not is_full: cmd += ['-ss', str(ss), '-t', str(dur)]
                         cmd += ['-i', s_url, '-vn', '-acodec', 'libmp3lame', '-ab', '192k', '-ar', '44100']
                         flts = []
@@ -125,13 +137,19 @@ class EngineerAgent:
                         if int(adj.get('lowcut', 0)) > 0: flts.append(f"highpass=f={int(adj['lowcut'])*20}")
                         if flts: cmd += ['-filter:a', ",".join(flts)]
                         cmd.append(out)
-                        subprocess.run(cmd, capture_output=True, timeout=90)
-                        if os.path.exists(out) and os.path.getsize(out) > 1000: return out, track
+                        
+                        proc = subprocess.run(cmd, capture_output=True, timeout=120)
+                        if proc.returncode == 0 and os.path.exists(out) and os.path.getsize(out) > 1000:
+                             print(f"[Engineer] Success on strategy {s_idx} for Node {idx+1}", flush=True)
+                             return out, track
+                        else:
+                             err_log = proc.stderr.decode('utf-8', 'ignore') if proc.stderr else "Unknown FFMPEG error"
+                             print(f"[Engineer] FFMPEG failure on Node {idx+1}: {err_log}", flush=True)
             except Exception as e:
                 err_msg = str(e).lower()
                 print(f"[Engineer] Strategy {s_idx} failed for Node {idx+1}: {e}", flush=True)
                 # Don't keep trying if it's DRM, Private, or requires sign-in
-                if "drm" in err_msg or "private" in err_msg or "sign in" in err_msg or "age" in err_msg:
+                if any(x in err_msg for x in ["drm", "private", "sign in", "age"]):
                     print(f"[Engineer] Node {idx+1} is strictly blocked (DRM/Auth). Skipping strategies.", flush=True)
                     break
 
@@ -177,8 +195,19 @@ class MixingAgent:
         master = None
         for i, (path, info) in enumerate(sf):
             try:
-                print(f"[Mixer] Processing element {i+1}", flush=True)
-                s = AudioSegment.from_mp3(path)
+                print(f"[Mixer] Processing element {i+1} from {path}", flush=True)
+                # Retry loop for AudioSegment.from_mp3 to fix potential OSError 22 (file locking on Windows)
+                s = None
+                for attempt in range(3):
+                    try:
+                        s = AudioSegment.from_mp3(path)
+                        break
+                    except OSError as e:
+                        if attempt < 2:
+                            print(f"[Mixer] OSError on attempt {attempt+1} for {path}: {e}. Retrying in 1s...", flush=True)
+                            time.sleep(1)
+                        else: raise e
+                if not s: raise Exception(f"Failed to load audio from {path}")
                 
                 # --- AUTOMATED EFFECTS (User Requirement) ---
                 # AI Enhancement: Peak-Volume Breakpoint Analysis
@@ -269,9 +298,14 @@ class MixingAgent:
                         master = master.append(s, crossfade=max(0, cf))
                     else:
                         master = master.append(s, crossfade=0)
-            except Exception:
+            except Exception as e:
                 print(f"[Mixer] Skip error on {path}", flush=True)
                 traceback.print_exc()
+                try:
+                    with open(os.path.join(PROJECT_ROOT, "mixer_error.txt"), "a") as f:
+                        f.write(f"\n--- MIXER ERROR for {path} ---\n")
+                        f.write(traceback.format_exc())
+                except: pass
         
         if master:
             if len(sf) == 1: master = effects.normalize(master)
@@ -333,11 +367,27 @@ def status():
     h = MaintenanceAgent().check_health()
     return jsonify({'status': 'AGENCY SYSTEM OPERATIONAL', 'version': '5.0.Agentic', 'details': h})
 
+@app.route('/download_static/<filename>')
+def download_static(filename):
+    # Only allow downloading .mp3 files from the project root for security
+    if not filename.endswith(".mp3"): return "Only audio files allowed.", 403
+    path = os.path.join(PROJECT_ROOT, filename)
+    if os.path.exists(path):
+        return send_file(path, as_attachment=True)
+    return "File not found.", 404
+
 @app.route('/generate_mashup', methods=['POST'])
 def generate_mashup():
     try:
         d = request.json
         if not d: return jsonify({'details': 'No JSON'}), 400
+        
+        # DEBUG: Save request payload
+        try:
+            with open(os.path.join(PROJECT_ROOT, "last_request.json"), "w") as f:
+                json.dump(d, f, indent=4)
+        except: pass
+        
         pm = PMAgent(d)
         p, e = pm.run_synthesis()
         if e: return jsonify({'details': e}), 500

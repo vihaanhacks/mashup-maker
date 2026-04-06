@@ -131,7 +131,10 @@
             </div>
 
             <div class="add-track-container" style="text-align: center; margin-top: 2rem;">
-                <button type="button" id="add-track-btn" class="btn secondary-btn small-btn" style="border: 1px dashed rgba(255,255,255,0.4); padding: 0.8rem 2rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s ease;">+ Add Element <span id="track-count-badge" style="opacity: 0.6; font-size: 0.9em;">(5/10)</span></button>
+                <button type="button" id="add-track-btn" class="btn secondary-btn small-btn"
+                    style="border: 1px dashed rgba(255,255,255,0.4); padding: 0.8rem 2rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s ease;">+
+                    Add Element <span id="track-count-badge"
+                        style="opacity: 0.6; font-size: 0.9em;">(5/10)</span></button>
             </div>
 
             <div class="window-actions" style="justify-content: center; border: none; margin-top: 5rem; gap: 2rem;">
@@ -206,12 +209,12 @@
 
                 <div class="slider-group">
                     <div class="slider-header">
-                        <label>Choral Ensemble (Chorus)</label>
+                        <label>Harmonic Chorus (Ensemble)</label>
                         <span class="info-trigger"
-                            data-info="Choral Ensemble: Adds a shimmering, multi-voice effect for richer textures.">i</span>
-                        <span class="slider-value" id="chorus-val">Off</span>
+                            data-info="Harmonic Chorus: Adds a shimmering, multi-voice effect for richer textures.">i</span>
+                        <span class="slider-value" id="harmonic-chorus-val">Off</span>
                     </div>
-                    <input type="range" id="chorus-level" name="chorus" min="0" max="100" value="0"
+                    <input type="range" id="harmonic-chorus-level" name="harmonic_chorus" min="0" max="100" value="0"
                         class="premium-slider">
                 </div>
 
@@ -283,9 +286,9 @@
                         <label>Chorus Depth</label>
                         <span class="info-trigger"
                             data-info="Chorus Depth: Thickens the sound by adding slightly detuned copies for lush texture.">i</span>
-                        <span class="slider-value" id="chorus-val">Off</span>
+                        <span class="slider-value" id="chorus-depth-val">Off</span>
                     </div>
-                    <input type="range" id="chorus-level" name="chorus" min="0" max="100" value="0"
+                    <input type="range" id="chorus-depth-level" name="chorus_depth" min="0" max="100" value="0"
                         class="premium-slider">
                 </div>
                 <div class="slider-group">
@@ -386,8 +389,10 @@
 
             <div class="window-actions" style="margin-top: 5rem; flex-direction: column; gap: 2rem;">
                 <div style="display: flex; gap: 2rem; width: 100%; justify-content: center;">
-                    <button type="button" class="btn secondary-btn prev-tab" data-prev="selection-window">Refine Curation</button>
-                    <button type="button" class="btn primary-btn next-tab" data-next="direction-window" style="padding: 1.5rem 5rem;">SET VISIONARY INTENT</button>
+                    <button type="button" class="btn secondary-btn prev-tab" data-prev="selection-window">Refine
+                        Curation</button>
+                    <button type="button" class="btn primary-btn next-tab" data-next="direction-window"
+                        style="padding: 1.5rem 5rem;">SET VISIONARY INTENT</button>
                 </div>
                 <button type="button" id="ai-mashup-btn" class="btn ai-premium-btn pulse-glow-purple">
                     <span class="btn-icon">✨</span> PRO AI MASHUP (HARMONIC SYNC)
@@ -589,7 +594,9 @@
                 </div>
 
                 <div class="output-actions" style="display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;">
-                    <button type="button" id="remove-effects-btn" class="btn secondary-btn small-btn" style="background: none; border: 1px solid rgba(255,100,100,0.4); color: #ff8888; padding: 1rem 2rem; font-size: 0.9rem;">Remove AI Effects (Pure Merge)</button>
+                    <button type="button" id="remove-effects-btn" class="btn secondary-btn small-btn"
+                        style="background: none; border: 1px solid rgba(255,100,100,0.4); color: #ff8888; padding: 1rem 2rem; font-size: 0.9rem;">Remove
+                        AI Effects (Pure Merge)</button>
                     <a id="download-link" href="#" class="btn primary-btn"
                         style="text-decoration: none; padding: 1rem 3rem;">Export Master (.mp3)</a>
                     <button type="button" class="btn secondary-btn reset-app"
