@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 7. Synthesis Trigger
-    const synthesisHandler = async (e, aiMode = false, removeEffects = false) => {
+    const synthesisHandler = async (e, aiMode = false, removeEffects = false, lofiMode = false) => {
         if (e) e.preventDefault();
         
         // Validation
@@ -358,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = {
             ai_mode: aiMode,
             removeEffects: removeEffects,
+            lofi_mode: lofiMode,
             songs: [],
             vibe: form.querySelector('input[name="vibe"]:checked').value,
             audioAdjustments: {
@@ -482,9 +483,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    form.addEventListener('submit', (e) => synthesisHandler(e, false, false));
-    document.getElementById('ai-mashup-btn')?.addEventListener('click', (e) => synthesisHandler(null, true, false));
-    document.getElementById('remove-effects-btn')?.addEventListener('click', (e) => synthesisHandler(null, false, true));
+    form.addEventListener('submit', (e) => synthesisHandler(e, false, false, false));
+    document.getElementById('ai-mashup-btn')?.addEventListener('click', (e) => synthesisHandler(null, true, false, false));
+    document.getElementById('lofi-mashup-btn')?.addEventListener('click', (e) => {
+        logToStudio('PM', 'Aesthetic Core: LOFI MODE SYNTHESIS ENGAGED.');
+        synthesisHandler(null, true, false, true);
+    });
+    document.getElementById('remove-effects-btn')?.addEventListener('click', (e) => synthesisHandler(null, false, true, false));
 
     // 8. Preset Auto-Adjustment
     const presets = {

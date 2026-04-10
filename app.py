@@ -203,7 +203,7 @@ class ArchitectAgent:
         return sf
 
 class MixingAgent:
-    def mix(self, sf, sid, sparams, ai_mode=False, remove_effects=False, vibe="ocean_mist"):
+    def mix(self, sf, sid, sparams, ai_mode=False, remove_effects=False, vibe="ocean_mist", lofi_mode=False):
         master = None
         
         # Determine strategy based on vibe
@@ -368,6 +368,31 @@ class MixingAgent:
                 raw_lim = sparams.get('limiter', 100)
                 master_gain = float(raw_lim if raw_lim != "" else 100) / 100.0
                 if master_gain != 1.0: master = master + (10 * math.log10(max(0.001, master_gain)))
+                
+                # --- LOFI MODE SPECIALIZATION ---
+                if lofi_mode:
+                    print(f"[Mixer] Applying LOFI Aesthetic Signature...")
+                    # 1. Low-Pass Filter (Muffled)
+                    master = master.low_pass_filter(3200)
+                    
+                    # 2. Global Reverb (Dreamy)
+                    # Simulated deep reverb by layering and fading
+                    reverb_s = master.overlay(master - 12, position=150)
+                    master = (master - 6).overlay(reverb_s - 6)
+                    
+                    # 3. Global Pitch/Tempo (Slowed + Reverb)
+                    # Already handled somewhat by speed/pitch if user chose, but we force 0.9x for Lofi unless already slower
+                    # Note: pydub speed change is via sample rate
+                    if gspeed > 0.9:
+                        lofi_speed = 0.9
+                        new_sample_rate = int(master.frame_rate * lofi_speed)
+                        master = master._spawn(master.raw_data, overrides={'frame_rate': new_sample_rate})
+                        master = master.set_frame_rate(44100)
+                    
+                    # 4. Vinyl Grit (Subtle Distortion / Peak clipping)
+                    master = master - 2 # Headroom
+                    master = effects.compress_dynamic_range(master, threshold=-25, ratio=4.0)
+                    
             except Exception as e:
                 print(f"[Mixer Master] Error: {e}")
         return master
@@ -407,7 +432,8 @@ class PMAgent:
         vibe = self.data.get('vibe', 'ocean_mist')
         sf = self.arch.resolve_assembly(down, vibe, ai)
         remove_effects = bool(self.data.get('removeEffects', False))
-        master = self.mix_agent.mix(sf, self.sid, self.data.get('audioAdjustments', {}), ai, remove_effects, vibe)
+        lofi = bool(self.data.get('lofi_mode', False))
+        master = self.mix_agent.mix(sf, self.sid, self.data.get('audioAdjustments', {}), ai, remove_effects, vibe, lofi)
         
         if not master: return None, "Mix Failure"
         
