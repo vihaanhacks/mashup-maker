@@ -39,3 +39,107 @@ Traceback (most recent call last):
     url = re.sub(r'([&?])list=[^&]*', '', url)
                                           ^^^
 UnboundLocalError: cannot access local variable 'url' where it is not associated with a value
+
+--- ERROR Tue Apr  7 15:53:17 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    # seg = Total / (0.75*n + 0.25)
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:53:17 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    # seg = Total / (0.75*n + 0.25)
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:54:29 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    json.dump(d, f, indent=4)
+    ^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    if n > 1:
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:54:29 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    json.dump(d, f, indent=4)
+    ^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    if n > 1:
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:55:11 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    return send_file(p, mimetype="audio/mpeg", as_attachment=True, download_name="Masterpiece.mp3")
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    if n > 1:
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:55:11 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    return send_file(p, mimetype="audio/mpeg", as_attachment=True, download_name="Masterpiece.mp3")
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    if n > 1:
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:56:11 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    f.write(f"\n--- ERROR {time.ctime()} ---\n")
+       ^^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    print(f"[PMAgent] Songs: {n} | Segment: {segment_dur:.2f}s", flush=True)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:56:11 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    f.write(f"\n--- ERROR {time.ctime()} ---\n")
+       ^^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    print(f"[PMAgent] Songs: {n} | Segment: {segment_dur:.2f}s", flush=True)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:56:48 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    with open(log_p, "a") as f:
+       ^^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    print(f"[PMAgent] Songs: {n} | Segment: {segment_dur:.2f}s")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:56:48 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+    with open(log_p, "a") as f:
+       ^^^^^^^^^^^^^^^^^^
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    print(f"[PMAgent] Songs: {n} | Segment: {segment_dur:.2f}s")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:57:24 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    down = []
+OSError: [Errno 22] Invalid argument
+
+--- ERROR Tue Apr  7 15:57:24 2026 ---
+Traceback (most recent call last):
+  File "C:\Vihaan\mashup-maker\app.py", line 405, in generate_mashup
+  File "C:\Vihaan\mashup-maker\app.py", line 346, in run_synthesis
+    down = []
+OSError: [Errno 22] Invalid argument

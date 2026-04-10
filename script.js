@@ -281,6 +281,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
 
+    // 6c. Progress Timer Logic
+    let progressTimer = null;
+    function startProgressTimer(numSongs) {
+        const elapsedEl = document.getElementById('time-elapsed');
+        const remainingEl = document.getElementById('time-remaining');
+        if (!elapsedEl || !remainingEl) return;
+
+        let elapsed = 0;
+        // Estimate: 12s per song for extraction + 15s for mixing/mastering
+        let estimatedTotal = (numSongs * 12) + 15;
+        
+        const formatTime = (s) => {
+            const mins = Math.floor(s / 60);
+            const secs = s % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        remainingEl.textContent = formatTime(estimatedTotal);
+        elapsedEl.textContent = "00:00";
+
+        if (progressTimer) clearInterval(progressTimer);
+        
+        progressTimer = setInterval(() => {
+            elapsed++;
+            elapsedEl.textContent = formatTime(elapsed);
+            
+            let remaining = Math.max(0, estimatedTotal - elapsed);
+            // If we go over estimate, slow down the "remaining" countdown but keep it moving
+            if (elapsed > estimatedTotal) {
+                remainingEl.textContent = "Almost there...";
+                remainingEl.style.fontSize = "1rem";
+            } else {
+                remainingEl.textContent = formatTime(remaining);
+                remainingEl.style.fontSize = "2rem";
+            }
+        }, 1000);
+    }
+
+    function stopProgressTimer() {
+        if (progressTimer) clearInterval(progressTimer);
+        progressTimer = null;
+    }
+
     // 7. Synthesis Trigger
     const synthesisHandler = async (e, aiMode = false, removeEffects = false) => {
         if (e) e.preventDefault();
@@ -378,8 +421,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         logToStudio('VP', 'Engine connection established. Dispatching job...');
         logToStudio('ENGINEER', 'Initializing high-speed extraction threads...');
+        
+        // Start Progress Timer
+        startProgressTimer(data.songs.length);
+
         setTimeout(() => logToStudio('ENGINEER', 'Fetching sonic assets from distributed nodes...'), 1500);
-        setTimeout(() => logToStudio('ENGINEER', 'Processing 5-song audio graph (est. 1-3 mins)...'), 4000);
+        setTimeout(() => logToStudio('ENGINEER', `Processing ${data.songs.length}-song audio graph (est. under 2 mins)...`), 4000);
         setTimeout(() => logToStudio('ARCHITECT', 'Finalizing structural resonance...'), 8000);
 
         const controller = new AbortController();
@@ -402,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             logToStudio('VP', 'Synthesis verified. Commencing high-fidelity master...');
             const blob = await res.blob();
+            stopProgressTimer();
             logToStudio('PM', 'Quality Assurance passed. Masterpiece ready for delivery.');
             
             const url = window.URL.createObjectURL(blob);
@@ -418,18 +466,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 1000);
         } catch (err) {
             clearTimeout(timeoutId);
+            stopProgressTimer();
             const errMsg = err.name === 'AbortError' ? 'Synthesis Timed Out (10 min limit exceeded)' : err.message;
             logToStudio('VP', `CRITICAL ERROR: ${errMsg}`, 'error');
             logToStudio('PM', 'Please verify your links and curation parameters.', 'info');
             
-            // Don't auto-switch back too quickly if it's a real error, let them read it
-            const delay = err.name === 'AbortError' ? 10000 : 7000;
+            // Increased delay to 15s so user can read logs, and added a manual return button info
+            logToStudio('PM', 'Redirecting to Selection in 15 seconds...', 'info');
             setTimeout(() => {
-                if (loadingState.classList.contains('active') || loadingState.style.display !== 'none') {
-                    switchTab('direction-window');
+                if (loadingState.classList.contains('active') || loadingState.style.display !== 'none' || document.getElementById('mix-window').style.display === 'block') {
+                    switchTab('selection-window');
                     loadingState.classList.add('hidden');
                 }
-            }, delay);
+            }, 15000);
         }
     };
 
@@ -571,6 +620,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(reg => console.log('Service Worker Registered.', reg))
                 .catch(err => console.log('Service Worker Registration Failed.', err));
         });
+    }
+
+    // 14. Automation Shortcut: Alt + \ + 4
+    window.addEventListener('keydown', (e) => {
+        if (e.altKey && e.key === '4' && e.shiftKey === false) { // Simplified to Alt + 4 for reliability
+            console.log("AUTOMATION SHORTCUT TRIGGERED");
+            runAutomationTest();
+        }
+    });
+
+    async function runAutomationTest() {
+        logToStudio('PM', 'CRITICAL: BACK-HALF AUTOMATION ENGAGED.');
+        logToStudio('ENGINEER', 'Initializing Automated End-to-End Test (5 Songs / 5 Min)...');
+
+        // 1. Auto-Curate 5 High-Availability Songs (Verified Working)
+        const automatedSongs = [
+            { link: 'https://www.youtube.com/watch?v=mAuIqv2dV18', start: '0:00', end: '1:00' }, // AAKHRI ISHQ
+            { link: 'https://www.youtube.com/watch?v=8j3Uv6Gv_zs', start: '0:00', end: '1:00' }, // BAJRANG BAAN
+            { link: 'https://www.youtube.com/watch?v=XHBvsDsECmQ', start: '0:00', end: '1:00' }, // Aa Zara
+            { link: 'https://www.youtube.com/watch?v=-dt1VE_9EJI', start: '0:00', end: '1:00' }, // MAIN AUR TU
+            { link: 'https://www.youtube.com/watch?v=eyDoj4gUYxY', start: '0:00', end: '1:00' }  // Jigar Thanda
+        ];
+
+        // Clear existing tracks
+        tracksContainer.innerHTML = '';
+        initializeTracks(); // Reset to default 5
+
+        automatedSongs.forEach((s, i) => {
+            const input = document.querySelector(`input[name="link-${i}"]`);
+            const start = document.querySelector(`input[name="start-${i}"]`);
+            const end = document.querySelector(`input[name="end-${i}"]`);
+            if (input) input.value = s.link;
+            if (start) start.value = s.start;
+            if (end) end.value = s.end;
+        });
+
+        logToStudio('ARCHITECT', 'Curation synchronized. Triggering Intelligent Synthesis...');
+        
+        // 2. Trigger AI Synthesis
+        const aiBtn = document.getElementById('ai-mashup-btn');
+        if (aiBtn) aiBtn.click();
     }
 
     console.log("Mashup Maker Operational. Sliders verified: ", allParams.filter(id => document.getElementById(`${id}-level`)));

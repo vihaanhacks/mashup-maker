@@ -20,6 +20,7 @@
 
 <body class="theme-gold">
     <div class="background-animation">
+        <!-- Unified background animation handled in CSS -->
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
         <div class="blob blob-3"></div>
@@ -557,6 +558,17 @@
                 style="text-align: center; color: #fff; padding: 10rem 0; display: flex; flex-direction: column; align-items: center;">
                 <div class="editorial-loader"></div>
                 <h1 style="color: #fff; margin-top: 2rem;">COMPILING <em>MASTERPIECE</em></h1>
+                
+                <div id="progress-timer" style="margin: 1.5rem 0; font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; display: flex; gap: 2rem; color: rgba(255,255,255,0.8);">
+                    <div class="timer-item">
+                        <span style="display: block; font-size: 0.7rem; color: var(--primary); letter-spacing: 2px;">TIME ELAPSED</span>
+                        <span id="time-elapsed" style="font-size: 2rem; font-weight: 800; color: #fff;">00:00</span>
+                    </div>
+                    <div class="timer-item">
+                        <span style="display: block; font-size: 0.7rem; color: var(--primary); letter-spacing: 2px;">EST. REMAINING</span>
+                        <span id="time-remaining" style="font-size: 2rem; font-weight: 800; color: #fff;">00:00</span>
+                    </div>
+                </div>
 
                 <div class="agent-console">
                     <div class="console-header">

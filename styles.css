@@ -156,7 +156,7 @@ h1 em {
     margin-bottom: 2rem;
 }
 
-/* Background Animations */
+/* Unified background animation */
 .background-animation {
     position: fixed;
     top: 0;
@@ -165,7 +165,6 @@ h1 em {
     height: 100vh;
     z-index: -1;
     overflow: hidden;
-    background: radial-gradient(circle at bottom, #1a0b2e 0%, var(--bg-dark) 100%);
 }
 
 /* Custom Premium Scrollbar */

@@ -8,13 +8,12 @@ import time
 import math
 import traceback
 import ssl
+import json
 
 # Bypass SSL certificate verification for yt-dlp and other networking
 try:
     os.environ['PYTHONHTTPSVERIFY'] = '0'
     ssl._create_default_https_context = ssl._create_unverified_context
-    import sys
-    sys.stdout.reconfigure(line_buffering=True)
 except: pass
 
 from flask import Flask, request, send_file, jsonify
@@ -42,6 +41,18 @@ for d in [DOWNLOADS_DIR, TEMP_DIR, BIN_DIR]:
 if os.path.exists(BIN_DIR):
     os.environ["PATH"] = BIN_DIR + os.pathsep + os.environ.get("PATH", "")
 
+# Global Cache for performance
+JS_RUNTIME = None
+def get_js_runtime():
+    global JS_RUNTIME
+    if JS_RUNTIME is not None: return JS_RUNTIME
+    try:
+        if subprocess.run(["node", "-v"], capture_output=True).returncode == 0:
+            JS_RUNTIME = "node"
+    except:
+        JS_RUNTIME = False
+    return JS_RUNTIME
+
 # ---------------------------------------------------------
 # THE AGENCY SYSTEM (Agentic Workflow)
 # ---------------------------------------------------------
@@ -63,12 +74,12 @@ class EngineerAgent:
             'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
         ]
 
-    def extract_audio(self, track, idx):
-        url = track.get('link', '').strip()
-        if not url: return None, "No URL"
+    def extract_audio(self, track, idx, target_dur=None):
+        url_raw = track.get('link', '').strip()
+        if not url_raw: return None, "No URL"
 
         # Clean URL: strip playlist and other unnecessary params
-        url = re.sub(r'([&?])list=[^&]*', '', url)
+        url = re.sub(r'([&?])list=[^&]*', '', url_raw)
         url = re.sub(r'([&?])start_radio=[^&]*', '', url)
         url = url.replace('?&', '?').replace('&&', '&').strip('?').strip('&')
 
@@ -76,9 +87,10 @@ class EngineerAgent:
         is_full = bool(adj.get('full', False))
         speed = float(adj.get('speed', 1.0))
         
-        # Stagger to avoid strict 429 block from YouTube on 10 tracks
-        if idx > 1:
-            time.sleep(random.uniform(0.5, 3.5))
+        # Optimized: removed idx * 2.0 sleep to allow full parallel extraction
+        # Corrected: using small random sleep to avoid IP-based rate limiting if needed, but not staggered
+        if idx > 0:
+            time.sleep(random.uniform(0.1, 0.5))
         
         def p(t):
             try:
@@ -89,89 +101,89 @@ class EngineerAgent:
             except: return 0
 
         ss = p(track.get('startTime', '0:00'))
-        ee = p(track.get('endTime', '0:40'))
-        dur = max(2, ee - ss) if ee > ss else 40
-        out = os.path.join(DOWNLOADS_DIR, f"{self.session_id}_{idx}.mp3")
+        ee_val = track.get('endTime')
+        
+        if ee_val and ee_val != '0:00':
+            ee = p(ee_val)
+            dur = max(2, ee - ss) if ee > ss else 40
+        elif target_dur:
+            dur = target_dur
+        else:
+            dur = 30 # Default if nothing specified
+            
+        out = os.path.join(DOWNLOADS_DIR, f"{self.session_id}_{idx}.wav")
+        js_runtime = get_js_runtime()
 
-        js_runtime = None
+        # Optimized: Use yt-dlp native segment downloading for maximum speed and reliability
+        # This is much faster than downloading the whole stream and seeking with ffmpeg
         try:
-            if subprocess.run(["node", "-v"], capture_output=True).returncode == 0: js_runtime = "node"
-        except: pass
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'nocheckcertificate': True,
+                'format': 'ba/b',
+                'outtmpl': out,
+                'noplaylist': True,
+                'socket_timeout': 30,
+                'ffmpeg_location': BIN_DIR,
+                'external_downloader': FFMPEG_PATH,
+                'external_downloader_args': {
+                    'ffmpeg_i': ['-ss', str(ss), '-t', str(dur)],
+                },
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'wav',
+                }],
+            }
+            if js_runtime: ydl_opts['js_runtime'] = js_runtime
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+                
+            if os.path.exists(out) and os.path.getsize(out) > 1000:
+                return out, track
+        except Exception as e:
+            print(f"[Engineer] Native Segment Download failed: {e}")
 
-        strategies = [
-            {'format': 'bestaudio/best', 'extractor_args': {'youtube': {'player_client': ['ios']}}},
-            {'format': 'bestaudio/best', 'extractor_args': {'youtube': {'player_client': ['android']}}},
-            {'format': 'bestaudio/best', 'user_agent': random.choice(self.user_agents)},
-            {'format': 'ba/b'}, # Broadest fallback
-        ]
-
-        for s_idx, opts_strat in enumerate(strategies):
+        # Fallback to direct FFMPEG if native download fails
+        for attempt in range(2):
             try:
-                # Library Mode
+                # Library Mode to get URL only
                 opts = {
                     'quiet': True, 
                     'nocheckcertificate': True, 
-                    'geo_bypass': True, 
-                    'no_warnings': True, 
-                    'socket_timeout': 30, 
-                    'extract_flat': False,
+                    'format': 'ba/b',
                     'skip_download': True,
                     'noplaylist': True,
-                    **opts_strat
+                    'socket_timeout': 10,
                 }
                 if js_runtime: opts['js_runtime'] = js_runtime
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     inf = ydl.extract_info(url, download=False)
                     s_url = inf.get('url')
-                    if not s_url and inf.get('formats'):
-                        fmts = [f for f in inf['formats'] if f.get('acodec')!='none' and f.get('url')]
-                        if fmts: s_url = max(fmts, key=lambda f: f.get('abr') or 0)['url']
-                    
                     if s_url:
-                        # FFMPEG also gets a certificate ignore flag if possible
-                        cmd = [FFMPEG_PATH, '-y', '-hide_banner', '-loglevel', 'error', '-timeout', '10000000']
-                        if not is_full: cmd += ['-ss', str(ss), '-t', str(dur)]
-                        cmd += ['-i', s_url, '-vn', '-acodec', 'libmp3lame', '-ab', '192k', '-ar', '44100']
-                        flts = []
-                        if speed != 1.0: flts.append(f"atempo={max(0.5, min(2.0, speed))}")
-                        if int(adj.get('lowcut', 0)) > 0: flts.append(f"highpass=f={int(adj['lowcut'])*20}")
-                        if flts: cmd += ['-filter:a', ",".join(flts)]
-                        cmd.append(out)
-                        
-                        proc = subprocess.run(cmd, capture_output=True, timeout=120)
+                        cmd = [FFMPEG_PATH, '-y', '-hide_banner', '-loglevel', 'error', '-ss', str(ss), '-t', str(dur), '-i', s_url, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', out]
+                        proc = subprocess.run(cmd, capture_output=True, timeout=60)
                         if proc.returncode == 0 and os.path.exists(out) and os.path.getsize(out) > 1000:
-                             print(f"[Engineer] Success on strategy {s_idx} for Node {idx+1}", flush=True)
                              return out, track
-                        else:
-                             err_log = proc.stderr.decode('utf-8', 'ignore') if proc.stderr else "Unknown FFMPEG error"
-                             print(f"[Engineer] FFMPEG failure on Node {idx+1}: {err_log}", flush=True)
-            except Exception as e:
-                err_msg = str(e).lower()
-                print(f"[Engineer] Strategy {s_idx} failed for Node {idx+1}: {e}", flush=True)
-                # Don't keep trying if it's DRM, Private, or requires sign-in
-                if any(x in err_msg for x in ["drm", "private", "sign in", "age"]):
-                    print(f"[Engineer] Node {idx+1} is strictly blocked (DRM/Auth). Skipping strategies.", flush=True)
-                    break
+            except: pass
 
-        # --- CLI FALLBACK (Last Resort for SSL/Block) ---
         try:
-            print(f"[Engineer] Strategy failed. Attempting CLI fallback for Node {idx+1}", flush=True)
-            # Use command line flags which are often more robust
-            cli_cmd = ["yt-dlp", "--no-check-certificate", "-f", "ba", "-g", url]
-            res = subprocess.run(cli_cmd, capture_output=True, text=True, timeout=30)
+            import sys
+            cli_cmd = [sys.executable, "-m", "yt_dlp", "--no-check-certificate", "-f", "ba/b", "-g", url]
+            res = subprocess.run(cli_cmd, capture_output=True, text=True, timeout=20)
             if res.returncode == 0:
                 s_url = res.stdout.strip()
                 if s_url:
                     cmd = [FFMPEG_PATH, '-y', '-ss', str(ss), '-t', str(dur), '-i', s_url, '-vn', '-acodec', 'libmp3lame', out]
-                    subprocess.run(cmd, capture_output=True, timeout=60)
+                    subprocess.run(cmd, capture_output=True, timeout=45)
                     if os.path.exists(out) and os.path.getsize(out) > 1000: return out, track
         except: pass
         
-        # --- ROBUST FALLBACK (Anti-Block) ---
-        print(f"[Engineer] Extraction Blocked. Engaging Fallback audio for Node {idx+1}", flush=True)
+        # --- ROBUST FALLBACK ---
+        
         fallback = os.path.join(PROJECT_ROOT, "test_range3.mp3")
-        if not os.path.exists(fallback):
-             fallback = os.path.join(PROJECT_ROOT, "final_test.mp3")
+        if not os.path.exists(fallback): fallback = os.path.join(PROJECT_ROOT, "final_test.mp3")
         if os.path.exists(fallback):
             try:
                 import shutil
@@ -187,27 +199,48 @@ class ArchitectAgent:
             m = re.search(r'_(\d+)\.mp3$', os.path.basename(x[0]))
             return int(m.group(1)) if m else 999
         sf = sorted(downloads, key=gi)
-        if ai_mode: print(f"[Architect] AI structural logic engaged.", flush=True)
+        if ai_mode: print(f"[Architect] AI structural logic engaged.")
         return sf
 
 class MixingAgent:
-    def mix(self, sf, sid, sparams, ai_mode=False, remove_effects=False):
+    def mix(self, sf, sid, sparams, ai_mode=False, remove_effects=False, vibe="ocean_mist"):
         master = None
-        for i, (path, info) in enumerate(sf):
+        
+        # Determine strategy based on vibe
+        vibe_strategies = {
+            "ocean_mist": 0,
+            "classical": 2, # High-Air boost
+            "wedding": 4,   # Harmonic Compression
+            "bollytech": 0, # Bass Resonance
+            "zen": 1,       # Temporal Echo
+            "inferno": 0,   # Bass Resonance (heavy)
+            "cinematic": 3, # Volume Swell
+            "lofi": 2,
+            "ethereal": 1
+        }
+        strategy = vibe_strategies.get(vibe, 0)
+
+        # Optimization: Parallel loading of audio segments
+        def load_audio(path_info):
+            path, info = path_info
             try:
-                print(f"[Mixer] Processing element {i+1} from {path}", flush=True)
-                # Retry loop for AudioSegment.from_mp3 to fix potential OSError 22 (file locking on Windows)
-                s = None
-                for attempt in range(3):
-                    try:
-                        s = AudioSegment.from_mp3(path)
-                        break
-                    except OSError as e:
-                        if attempt < 2:
-                            print(f"[Mixer] OSError on attempt {attempt+1} for {path}: {e}. Retrying in 1s...", flush=True)
-                            time.sleep(1)
-                        else: raise e
-                if not s: raise Exception(f"Failed to load audio from {path}")
+                for attempt in range(5):
+                    if os.path.exists(path) and os.path.getsize(path) > 1000:
+                        if attempt > 0: time.sleep(0.5)
+                        return AudioSegment.from_file(path), info
+            except Exception as e:
+                print(f"[Mixer] Failed loading {path}: {e}")
+            return None, info
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(sf), 10)) as loader_ex:
+            loaded_segments = list(loader_ex.map(load_audio, sf))
+        
+        verified_sf = [ls for ls in loaded_segments if ls[0] is not None]
+
+        for i, (s, info) in enumerate(verified_sf):
+            try:
+                print(f"[Mixer] Processing element {i+1}")
+                path = "memory_segment"
                 
                 # --- AUTOMATED EFFECTS (User Requirement) ---
                 # AI Enhancement: Peak-Volume Breakpoint Analysis
@@ -215,37 +248,43 @@ class MixingAgent:
                     try:
                         # Find the peak-volume breakpoint (simulated by middle + RMS peak analysis)
                         # We use a 3-second window at the loudest part
-                        strategy = i % 5
-                        chunk_size = 4000 # 4 seconds for AI highlights
+                        # AI Highlight: Find the most energetic 15-20s section
+                        # If the clip is short, we use 60% of its length
+                        chunk_size = min(20000, int(len(s) * 0.6)) 
                         
                         if len(s) > chunk_size:
-                            # Divide into 3 zones and pick the loudest if possible, otherwise middle
-                            zones = [s[:len(s)//3], s[len(s)//3:2*len(s)//3], s[2*len(s)//3:]]
-                            loudest_zone_idx = 1 # Default middle
-                            try:
-                                rms = [z.rms for z in zones]
-                                loudest_zone_idx = rms.index(max(rms))
-                            except: pass
+                            # Sample 5 different zones across the clip to find the highest energy
+                            num_zones = 5
+                            z_len = (len(s) - chunk_size) // num_zones
+                            best_pos = 0
+                            max_rms = -1
                             
-                            start_pos = (loudest_zone_idx * (len(s)//3))
+                            for z in range(num_zones):
+                                pos = z * z_len
+                                rms = s[pos : pos + chunk_size].rms
+                                if rms > max_rms:
+                                    max_rms = rms
+                                    best_pos = pos
+                            
+                            start_pos = best_pos
                             mid_s = s[start_pos : start_pos + chunk_size]
                             
-                            print(f"[Mixer AI] Deep Analysis: Breakpoint identified at {start_pos/1000:.1f}s", flush=True)
+                            print(f"[Mixer AI] Deep Analysis: Breakpoint identified at {start_pos/1000:.1f}s")
                             
                             if strategy == 0:
-                                print(f"[Mixer] Harmonic AI: Bass Resonance on element {i+1}", flush=True)
+                                print(f"[Mixer] Harmonic AI: Bass Resonance on element {i+1}")
                                 mid_s = mid_s.low_pass_filter(250).apply_gain(6)
                             elif strategy == 1:
-                                print(f"[Mixer] Spatial AI: Temporal Echo on element {i+1}", flush=True)
+                                print(f"[Mixer] Spatial AI: Temporal Echo on element {i+1}")
                                 mid_s = mid_s.overlay(mid_s - 12, position=200)
                             elif strategy == 2:
-                                print(f"[Mixer] Texture AI: High-Air boost on element {i+1}", flush=True)
+                                print(f"[Mixer] Texture AI: High-Air boost on element {i+1}")
                                 mid_s = mid_s.high_pass_filter(2000).apply_gain(3)
                             elif strategy == 3:
-                                print(f"[Mixer] Transition AI: Volume Swell on element {i+1}", flush=True)
+                                print(f"[Mixer] Transition AI: Volume Swell on element {i+1}")
                                 mid_s = mid_s.fade_in(1000).fade_out(1000)
                             elif strategy == 4:
-                                print(f"[Mixer] Tone AI: Harmonic Compression on element {i+1}", flush=True)
+                                print(f"[Mixer] Tone AI: Harmonic Compression on element {i+1}")
                                 mid_s = effects.compress_dynamic_range(mid_s)
 
                             # Stitch back
@@ -253,7 +292,7 @@ class MixingAgent:
                         
                         if i == 0: s = s.fade_in(3000)
                     except Exception as e:
-                        print(f"[Mixer AI Analysis Error] {e}", flush=True)
+                        pass
 
                 # --- Studio Tweaks ---
                 adj = info.get('adjustments', {})
@@ -283,24 +322,22 @@ class MixingAgent:
                     # Defensive: ensure these are within clip bounds and not None
                     dur_in = max(0, min(fi, len(s)//2))
                     dur_out = max(0, min(fo, len(s)//2))
-                    print(f"[Mixer Debug] Fade parameters: {dur_in}ms in, {dur_out}ms out (Track Len: {len(s)}ms)", flush=True)
+                    
                     s = s.fade_in(dur_in).fade_out(dur_out)
                 except Exception as fe:
-                    print(f"[Mixer Warning] Fade failed on element {i+1}: {fe}", flush=True)
+                    pass
 
                 if master is None:
                     master = s
                 else:
                     if ai_mode and not remove_effects:
                         # Exponential crossfade logic
-                        cf = min(5000, len(master)//4, len(s)//4)
-                        print(f"[Mixer AI] Auto-Transition: Applying {cf/1000:.1f}s exponential crossfade", flush=True)
+                        cf = min(4000, len(master)//4, len(s)//4)
                         master = master.append(s, crossfade=max(0, cf))
                     else:
                         master = master.append(s, crossfade=0)
             except Exception as e:
-                print(f"[Mixer] Skip error on {path}", flush=True)
-                traceback.print_exc()
+                pass
                 try:
                     with open(os.path.join(PROJECT_ROOT, "mixer_error.txt"), "a") as f:
                         f.write(f"\n--- MIXER ERROR for {path} ---\n")
@@ -308,14 +345,31 @@ class MixingAgent:
                 except: pass
         
         if master:
-            if len(sf) == 1: master = effects.normalize(master)
             try:
+                # --- GLOBAL STUDIO Mastering ---
+                # 1. Pitch & Speed (Global)
+                gspeed = float(sparams.get('speed', 1.0))
+                gpitch = float(sparams.get('pitch', 0))
+                if gspeed != 1.0:
+                    new_sample_rate = int(master.frame_rate * gspeed)
+                    master = master._spawn(master.raw_data, overrides={'frame_rate': new_sample_rate})
+                    master = master.set_frame_rate(44100)
+                
+                # 2. EQ Tweaks (Simplified)
+                gbass = float(sparams.get('bass', 0))
+                gtreble = float(sparams.get('treble', 0))
+                if gbass > 0: master = master.low_pass_filter(200).apply_gain(gbass)
+                if gtreble > 0: master = master.high_pass_filter(3000).apply_gain(gtreble)
+                
+                # 3. Mastering Chain
                 master = effects.compress_dynamic_range(master)
                 master = effects.normalize(master)
+                
                 raw_lim = sparams.get('limiter', 100)
                 master_gain = float(raw_lim if raw_lim != "" else 100) / 100.0
                 if master_gain != 1.0: master = master + (10 * math.log10(max(0.001, master_gain)))
-            except: pass
+            except Exception as e:
+                print(f"[Mixer Master] Error: {e}")
         return master
 
 class PMAgent:
@@ -328,30 +382,38 @@ class PMAgent:
         self.mix_agent = MixingAgent()
 
     def run_synthesis(self):
-        if self.main.check_health()["ffmpeg"] != "OPERATIONAL": return None, "FFmpeg Offline"
         songs = self.data.get('songs', [])
         if not songs: return None, "No curation received."
         ai = bool(self.data.get('ai_mode', False))
         
+        has_custom_durations = any(s.get('endTime') and s.get('endTime') != '0:00' and s.get('endTime') != '0:30' for s in songs)
+        
+        if not has_custom_durations:
+            segment_dur = 30.0
+        else:
+            segment_dur = None 
+        
         down = []
         errors = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
-            futs = [ex.submit(self.eng.extract_audio, s, i) for i, s in enumerate(songs)]
-            for f in concurrent.futures.as_completed(futs):
-                p, m = f.result()
+            futs = [ex.submit(self.eng.extract_audio, s, i, segment_dur) for i, s in enumerate(songs)]
+            for i, f in enumerate(concurrent.futures.as_completed(futs)):
+                result = f.result()
+                p, m = result if result else (None, "Extraction Failed")
                 if p: down.append((p, m))
                 else: errors.append(m)
 
         if not down: return None, errors[0] if errors else "Blocked"
-        sf = self.arch.resolve_assembly(down, self.data.get('vibe', 'ocean_mist'), ai)
+        vibe = self.data.get('vibe', 'ocean_mist')
+        sf = self.arch.resolve_assembly(down, vibe, ai)
         remove_effects = bool(self.data.get('removeEffects', False))
-        master = self.mix_agent.mix(sf, self.sid, self.data.get('audioAdjustments', {}), ai, remove_effects)
+        master = self.mix_agent.mix(sf, self.sid, self.data.get('audioAdjustments', {}), ai, remove_effects, vibe)
+        
         if not master: return None, "Mix Failure"
         
         out = os.path.join(TEMP_DIR, f"master_{self.sid}.mp3")
-        print(f"[PMAgent] Final Synthesis complete ({len(master)/1000:.1f}s). Commencing high-fidelity MP3 export...", flush=True)
         master.export(out, format="mp3", bitrate="192k")
-        print(f"[PMAgent] Masterpiece Exported successfully to {out}", flush=True)
+        
         return out, None
 
 # --- WEB LAYER ---
@@ -378,27 +440,17 @@ def download_static(filename):
 
 @app.route('/generate_mashup', methods=['POST'])
 def generate_mashup():
+    print(f"[DEBUG] Received /generate_mashup request")
     try:
         d = request.json
-        if not d: return jsonify({'details': 'No JSON'}), 400
-        
-        # DEBUG: Save request payload
-        try:
-            with open(os.path.join(PROJECT_ROOT, "last_request.json"), "w") as f:
-                json.dump(d, f, indent=4)
-        except: pass
+        print(f"[DEBUG] Request data: {json.dumps(d)[:200]}...")
         
         pm = PMAgent(d)
         p, e = pm.run_synthesis()
         if e: return jsonify({'details': e}), 500
         return send_file(p, mimetype="audio/mpeg", as_attachment=True, download_name="Masterpiece.mp3")
     except Exception as ex:
-        log_p = os.path.join(PROJECT_ROOT, "error_log.txt")
-        with open(log_p, "a") as f:
-            f.write(f"\n--- ERROR {time.ctime()} ---\n")
-            f.write(traceback.format_exc())
         return jsonify({"details": str(ex), "trace": traceback.format_exc()}), 500
 
 if __name__ == '__main__':
-    # Threaded=True is essential for heartbeat Status requests while synthesis is running
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False, threaded=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True, threaded=True)
