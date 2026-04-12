@@ -135,7 +135,7 @@ class EngineerAgent:
                     'preferredcodec': 'wav',
                 }],
             }
-            if js_runtime: ydl_opts['js_runtime'] = js_runtime
+            if js_runtime: ydl_opts['javascript_runtime'] = js_runtime
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
@@ -157,7 +157,7 @@ class EngineerAgent:
                     'noplaylist': True,
                     'socket_timeout': 10,
                 }
-                if js_runtime: opts['js_runtime'] = js_runtime
+                if js_runtime: opts['javascript_runtime'] = js_runtime
                 with yt_dlp.YoutubeDL(opts) as ydl:
                     inf = ydl.extract_info(url, download=False)
                     s_url = inf.get('url')
@@ -196,7 +196,8 @@ class EngineerAgent:
 class ArchitectAgent:
     def resolve_assembly(self, downloads, vibe="ocean_mist", ai_mode=False):
         def gi(x):
-            m = re.search(r'_(\d+)\.mp3$', os.path.basename(x[0]))
+            # Supports both .wav and .mp3 extensions
+            m = re.search(r'_(\d+)\.(mp3|wav)$', os.path.basename(x[0]))
             return int(m.group(1)) if m else 999
         sf = sorted(downloads, key=gi)
         if ai_mode: print(f"[Architect] AI structural logic engaged.")
@@ -442,6 +443,18 @@ class PMAgent:
         
         return out, None
 
+# --- STORAGE MAINTENANCE ---
+def run_cleanup():
+    """Removes temporary files older than 1 hour to prevent disk bloat."""
+    now = time.time()
+    for d in [DOWNLOADS_DIR, TEMP_DIR]:
+        if not os.path.exists(d): continue
+        for f in os.listdir(d):
+            p = os.path.join(d, f)
+            if os.path.isfile(p) and (now - os.path.getmtime(p)) > 3600:
+                try: os.remove(p)
+                except: pass
+
 # --- WEB LAYER ---
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
@@ -468,6 +481,9 @@ def download_static(filename):
 def generate_mashup():
     print(f"[DEBUG] Received /generate_mashup request")
     try:
+        # Run cleanup on every request to keep storage lean
+        run_cleanup()
+        
         d = request.json
         print(f"[DEBUG] Request data: {json.dumps(d)[:200]}...")
         
